@@ -421,9 +421,10 @@ const EXEC_NODES = {
     options:[
       {t:JA, next:'tp', set:{rr:'≥0.7'}, tr:'RR ≥0.7'},
       {t:NEIN, result:NO('RR <0.7'), set:{rr:'<0.7'}}]},
-  tp:{stage:'SL / TP', q:'TP ≤2R + Typ-Logik', sub:'TP setzen: max. 2R, nach Typ-Logik ({type})',
+  tp:{stage:'SL / TP', q:'TP ≤2R + Typ-Logik erfüllt?', sub:'TP setzen: max. 2R, nach Typ-Logik ({type})',
     options:[
-      {t:'TP GESETZT', s:'≤2R + Typ-Logik', next:'final', set:{tp:'≤2R'}, tr:'TP ≤2R + Typ-Logik'}]},
+      {t:JA, next:'final', set:{tp:'≤2R'}, tr:'TP ≤2R + Typ-Logik'},
+      {t:NEIN, result:NO('TP >2R oder Typ-Logik nicht erfüllt')}]},
   final:{stage:'FINAL', kind:'final', q:'Alle Pflicht-Gates OK?', sub:'FINAL GATE – direkt vor dem Entry',
     options:[
       {t:JA, s:'→ TRADE', result:{type:'TRADE'}, tr:'Final Gate OK'},
