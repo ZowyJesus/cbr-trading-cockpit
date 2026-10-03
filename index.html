@@ -114,14 +114,15 @@ header{display:flex;align-items:center;gap:var(--s6);padding:18px 40px 14px}
 
 /* progress — Core-Model-Sequenz */
 .progress{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 4px;padding:12px 40px 16px;border-bottom:1px solid var(--line);margin:0 0}
-.stg{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--tx5);padding:7px 11px;border:1px solid transparent;border-radius:3px;white-space:nowrap}
-.stg i{width:6px;height:6px;background:var(--tx5);flex:none}
+.stg{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--tx4);padding:7px 11px;border:1px solid transparent;border-radius:3px;white-space:nowrap}
+.stg i{width:7px;height:7px;background:var(--tx5);flex:none}
+.stg:not(.done):not(.cur){opacity:.85}
 .stg.done{color:var(--tx2)} .stg.done i{background:var(--green)}
 .stg.cur{color:var(--purple-l);border-color:var(--purple-b);background:var(--purple-s);font-weight:700} .stg.cur i{background:var(--purple)}
 .stg.cur.r-no{color:var(--red-l);border-color:var(--red-b);background:var(--red-s)} .stg.cur.r-no i{background:var(--red)}
 .stg.cur.r-wait,.stg.cur.r-review{color:var(--amber);border-color:var(--amber-b);background:var(--amber-s)} .stg.cur.r-wait i,.stg.cur.r-review i{background:var(--amber)}
 .stg.cur.r-trade{color:var(--green);border-color:var(--green-b);background:var(--green-s)} .stg.cur.r-trade i{background:var(--green)}
-.sep{color:var(--tx5);font-family:var(--mono);font-size:12px;padding:0 2px}
+.sep{color:var(--tx5);font-family:var(--mono);font-size:13px;padding:0 2px}
 .sep.done{color:var(--purple-b)}
 
 main{display:grid;grid-template-columns:270px minmax(0,1fr) 290px;min-height:0}
@@ -129,17 +130,19 @@ aside{padding:28px 32px 24px 40px;overflow:auto;min-height:0}
 aside.r{padding:28px 40px 24px 32px}
 aside .over{display:block;padding-bottom:10px;border-bottom:1px solid var(--line2);font-size:10px}
 .sgrid{display:flex;flex-direction:column}
-.srow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
-.srow span{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx4)}
-.srow b{font-family:var(--mono);font-size:12px;font-weight:600;text-align:right;color:var(--tx)}
+.srow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.srow span{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx3)}
+.srow b{font-family:var(--mono);font-size:13.5px;font-weight:600;text-align:right;color:var(--tx)}
 .srow b.na{color:var(--tx5);font-weight:400}
 .srow b.ok{color:var(--green)} .srow b.cy{color:var(--purple-l)} .srow b.am{color:var(--amber)} .srow b.vi{color:var(--purple-l)}
 .trace{display:flex;flex-direction:column}
-.tr{display:grid;grid-template-columns:26px 1fr;gap:6px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--tx2);line-height:1.35}
-.tr i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--tx4);padding-top:1px}
+.tr{display:grid;grid-template-columns:28px 1fr;gap:6px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--tx2);line-height:1.35}
+.tr span{color:rgba(255,255,255,.78)}
+.tr i{font-style:normal;font-family:var(--mono);font-size:11.5px;color:var(--tx3);padding-top:1px}
+.tr.ok i{font-weight:700}
 .tr.ok i{color:var(--green)} .tr.no i{color:var(--red)} .tr.wait i,.tr.review i{color:var(--amber)} .tr.cc i{color:var(--purple-l)} .tr.nt i{color:var(--tx3)}
 .tr.no span{color:var(--red-l)} .tr.wait span,.tr.review span{color:var(--amber)} .tr.cc span{color:var(--purple-l)}
-.tr.now{border-bottom:0} .tr.now i{color:var(--purple)} .tr.now span{color:var(--tx);font-weight:700}
+.tr.now{border-bottom:1px solid var(--purple-b)} .tr.now i{color:var(--purple);font-weight:700} .tr.now span{color:var(--tx);font-weight:700}
 .tr.empty{grid-template-columns:1fr;color:var(--tx4);font-family:var(--mono);font-size:10.5px;letter-spacing:.14em}
 
 /* center — Playbook-Regelseite */
@@ -195,9 +198,9 @@ aside .over{display:block;padding-bottom:10px;border-bottom:1px solid var(--line
 .res .why .v{font-size:28px;font-weight:800;margin-top:8px;color:var(--tx);line-height:1.2}
 .res .meta{margin-top:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--tx3);text-transform:uppercase}
 .res.r-trade{border-color:var(--green-b)} .res.r-trade::before{background:var(--green)}
-.res.r-wait,.res.r-review{border-color:var(--amber-b);background:var(--amber-s)} .res.r-wait::before,.res.r-review::before{background:var(--amber)}
-.res.r-no{border-color:var(--red-b);background:var(--red-s)} .res.r-no::before{background:var(--red)}
-.res.r-fs{border-color:var(--purple-b);background:var(--purple-s)} .res.r-fs::before{background:var(--purple)}
+.res.r-wait,.res.r-review{border-color:var(--amber-b);background:var(--surface);background:color-mix(in srgb,var(--amber-s) 70%,var(--surface))} .res.r-wait::before,.res.r-review::before{background:var(--amber)}
+.res.r-no{border-color:var(--red-b);background:var(--surface);background:color-mix(in srgb,var(--red-s) 70%,var(--surface))} .res.r-no::before{background:var(--red)}
+.res.r-fs{border-color:var(--purple-b);background:var(--surface);background:color-mix(in srgb,var(--purple-s) 70%,var(--surface))} .res.r-fs::before{background:var(--purple)}
 .res.r-trade .big .c{color:var(--tx)} .res.r-no .big .c{color:var(--red)} .res.r-wait .big .c,.res.r-review .big .c{color:var(--amber)} .res.r-fs .big .c{color:var(--purple-l)}
 .res .opts{margin-top:30px}
 .res .opt{background:var(--bg)}
@@ -268,7 +271,8 @@ footer{display:flex;align-items:center;gap:var(--s5);padding:12px 40px 14px;bord
   .stg{padding:5px 8px}
   .center{padding:16px 32px}
   aside{padding-top:18px} aside.r{padding-top:18px}
-  .srow{padding:5px 0} .tr{padding:4px 0;font-size:12px}
+  .srow{padding:5px 0} .srow b{font-size:12.5px} .tr{padding:4px 0;font-size:12.5px}
+  .stg{font-size:11px}
   .qcard{padding:24px 34px 24px}
   .q{font-size:38px;margin-top:14px}
   .chap{margin-top:10px;font-size:13px}
