@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CBR Live Execution</title>
+<style>
+:root{
+  --bg:#07090d; --bg2:#0b0f15; --panel:#0f141c; --card:#131a24; --card2:#18212d;
+  --line:#1f2935; --line2:#2a3646;
+  --tx:#e8edf3; --tx2:#9aa7b6; --tx3:#5f6c7b;
+  --cyan:#45d6d2; --cyan-d:#0f2a2c;
+  --blue:#4a9eff; --blue-d:#0f1d30;
+  --green:#2fd27a; --green-d:#0f2419;
+  --amber:#ffb340; --amber-d:#2b2112;
+  --test:#ffd166;
+  --red:#ff5a6e; --red-d:#2c1218;
+  --violet:#9b7bff; --violet-d:#1c1631;
+  --sans:"Bahnschrift","DIN Alternate","Roboto Condensed","Arial Narrow","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono","DejaVu Sans Mono","Cascadia Mono",Consolas,ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:15px;line-height:1.35;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.mono{font-family:var(--mono)}
+.lbl{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx3)}
+.hidden{display:none!important}
+
+/* ---------- START ---------- */
+#start{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;padding:32px 16px;
+  background:radial-gradient(1200px 600px at 50% 0%,#0e1a22 0%,var(--bg) 60%)}
+.brand{text-align:center}
+.brand .bar{width:56px;height:4px;background:var(--cyan);border-radius:2px;margin:0 auto 18px}
+.brand h1{font-size:64px;letter-spacing:.06em;font-weight:700;line-height:1}
+.brand h2{font-size:22px;letter-spacing:.42em;font-weight:500;color:var(--cyan);margin-top:10px;padding-left:.42em}
+.brand p{margin-top:14px}
+.tfgrid{display:grid;grid-template-columns:repeat(3,minmax(0,280px));gap:22px;width:100%;justify-content:center}
+.tfcard{position:relative;background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:34px 28px 26px;text-align:left;transition:border-color .08s,background .08s}
+.tfcard:hover,.tfcard:focus-visible{border-color:var(--cyan);background:#15202b;outline:none}
+.tfcard .k{position:absolute;top:14px;right:16px}
+.tfcard .tf{font-size:72px;font-weight:700;letter-spacing:.02em;line-height:1;color:var(--tx)}
+.tfcard .d{margin-top:16px;color:var(--tx2);font-size:13px;font-family:var(--mono);letter-spacing:.04em}
+.tfcard::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:0 0 14px 14px;background:var(--cyan)}
+.fscard{display:flex;align-items:center;gap:16px;background:var(--violet-d);border:1px solid #3d2f6b;border-radius:12px;padding:14px 22px;color:var(--tx)}
+.fscard:hover,.fscard:focus-visible{border-color:var(--violet);outline:none}
+.fscard b{font-size:20px;letter-spacing:.08em;color:var(--violet)}
+.fscard span{color:var(--tx2);font-size:13px}
+.principles{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;max-width:1100px}
+.pr{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--tx2);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+.pr i{font-style:normal;font-family:var(--mono);font-size:11px;font-weight:700;color:#06100f;border-radius:4px;padding:2px 6px}
+.resume{color:var(--tx2);font-size:13px;border:1px dashed var(--line2);padding:8px 14px;border-radius:8px}
+.resume:hover{border-color:var(--cyan);color:var(--tx)}
+
+/* ---------- APP ---------- */
+#app{height:100%;display:grid;grid-template-rows:auto auto 1fr auto}
+header{display:flex;align-items:center;gap:20px;padding:12px 22px;border-bottom:1px solid var(--line);background:var(--bg2)}
+.hbrand{display:flex;align-items:center;gap:12px}
+.hbrand .bar{width:4px;height:30px;background:var(--cyan);border-radius:2px}
+.hbrand b{font-size:18px;letter-spacing:.08em}
+.hbrand small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--tx3)}
+.tfpill{font-family:var(--mono);font-weight:700;font-size:15px;background:var(--cyan);color:#05201f;border-radius:999px;padding:6px 16px;letter-spacing:.06em}
+.tfpill.fs{background:var(--violet);color:#120a2a}
+.hstate{display:flex;gap:22px;flex:1;min-width:0;overflow:hidden}
+.hs{min-width:0}
+.hs .v{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--tx);white-space:nowrap}
+.hact{display:flex;gap:8px}
+.hbtn{font-family:var(--mono);font-size:11px;letter-spacing:.14em;border:1px solid var(--line2);border-radius:7px;padding:8px 12px;color:var(--tx2);background:var(--panel)}
+.hbtn:hover{border-color:var(--cyan);color:var(--tx)}
+.hbtn kbd,.fbtn kbd{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-left:6px}
+
+.progress{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;padding:10px 22px;border-bottom:1px solid var(--line)}
+.stg{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-align:center;padding:8px 4px;border-radius:7px;background:var(--card);color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stg.done{color:var(--tx2);background:#101820;box-shadow:inset 0 -2px 0 #24575a}
+.stg.cur{background:var(--cyan);color:#05201f;font-weight:700}
+.stg.cur.r-no{background:var(--red);color:#2a0710}
+.stg.cur.r-wait{background:var(--amber);color:#2a1a02}
+.stg.cur.r-fs{background:var(--violet);color:#120a2a}
+.stg.cur.r-trade{background:var(--green);color:#03200f}
+
+main{display:grid;grid-template-columns:260px minmax(0,1fr) 300px;min-height:0}
+aside{padding:18px 18px;overflow:auto;min-height:0}
+aside.l{border-right:1px solid var(--line);background:var(--bg2)}
+aside.r{border-left:1px solid var(--line);background:var(--bg2)}
+.sgrid{display:grid;gap:2px;margin-top:10px}
+.srow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #141b25;font-size:13px}
+.srow span{color:var(--tx3);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding-top:1px}
+.srow b{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--tx)}
+.srow b.na{color:#323d4a;font-weight:400}
+.srow b.ok{color:var(--green)} .srow b.cy{color:var(--cyan)} .srow b.am{color:var(--amber)} .srow b.vi{color:var(--violet)}
+.trace{margin-top:10px;display:flex;flex-direction:column;gap:3px;font-size:12.5px}
+.tr{display:flex;gap:8px;align-items:baseline;color:var(--tx2)}
+.tr i{font-style:normal;font-family:var(--mono);font-size:11px;width:12px;flex:none}
+.tr.ok i{color:var(--green)} .tr.no i{color:var(--red)} .tr.wait i{color:var(--amber)} .tr.cc i{color:var(--violet)} .tr.nt i{color:var(--cyan)}
+.tr.now{color:var(--cyan);font-weight:700}
+.tr.stg-h{margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--tx3)}
+
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 28px;min-height:0;overflow:auto}
+.qcard{width:100%;max-width:980px;background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:34px 40px 30px;position:relative}
+.qcard::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:0 3px 3px 0;background:var(--accent,var(--cyan))}
+.qhead{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.qhead .lbl{color:var(--accent,var(--cyan));font-weight:700}
+.tag{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;padding:3px 8px;border-radius:999px}
+.tag.test{background:var(--test);color:#2a1e00}
+.tag.fsx{background:var(--violet);color:#120a2a}
+.ibtn{margin-left:auto;width:30px;height:30px;border-radius:50%;border:1px solid var(--line2);font-family:var(--mono);font-weight:700;color:var(--tx2);font-size:14px}
+.ibtn:hover,.ibtn.on{border-color:var(--cyan);color:var(--cyan)}
+.q{font-size:44px;font-weight:700;line-height:1.12;letter-spacing:.01em}
+.qsub{margin-top:12px;font-family:var(--mono);font-size:14px;color:var(--tx2);letter-spacing:.03em}
+.qsub b{color:var(--cyan)}
+.info{margin-top:16px;background:var(--panel);border:1px solid var(--line2);border-left:3px solid var(--blue);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--tx2)}
+.opts{display:grid;gap:14px;margin-top:30px}
+.opts.n1{grid-template-columns:1fr}
+.opts.n2{grid-template-columns:1fr 1fr}
+.opts.n3{grid-template-columns:repeat(3,1fr)}
+.opts.n4{grid-template-columns:repeat(2,1fr)}
+.opts.list{grid-template-columns:repeat(3,1fr);gap:10px}
+.opt{position:relative;text-align:left;border-radius:12px;padding:20px 22px 18px;border:1.5px solid var(--line2);background:var(--card2);min-height:104px;display:flex;flex-direction:column;justify-content:space-between;transition:border-color .06s,background .06s}
+.opts.list .opt{min-height:70px;padding:14px 16px}
+.opt .k{position:absolute;top:12px;right:14px;font-family:var(--mono);font-size:12px;color:var(--tx3);border:1px solid var(--line2);border-radius:5px;padding:1px 7px}
+.opt .t{font-size:30px;font-weight:700;letter-spacing:.03em;padding-right:34px}
+.opts.list .opt .t{font-size:17px}
+.opt .s{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--tx2);margin-top:8px}
+.opt:hover,.opt:focus-visible{outline:none}
+.opt.go{border-color:#245c5a}.opt.go:hover{border-color:var(--cyan);background:#12262a}
+.opt.go .s{color:var(--cyan)}
+.opt.no{border-color:#5a2632;background:#1a1218}.opt.no:hover{border-color:var(--red);background:#24131a}
+.opt.no .s{color:var(--red)}
+.opt.wait{border-color:#5a4520;background:#1a1610}.opt.wait:hover{border-color:var(--amber);background:#241c10}
+.opt.wait .s{color:var(--amber)}
+.opt.fs{border-color:#3d2f6b;background:#16122a}.opt.fs:hover{border-color:var(--violet);background:#1d1736}
+.opt.fs .s{color:var(--violet)}
+.opt.trade{border-color:#1f5a3a;background:#0f1f17}.opt.trade:hover{border-color:var(--green);background:#11281b}
+.opt.trade .s{color:var(--green)}
+.opt.flash{transform:scale(.99)}
+.ctx{margin-top:18px;font-size:13px;color:var(--tx3);font-family:var(--mono)}
+
+/* checklist */
+.chk{display:grid;grid-template-columns:1fr 1fr;gap:6px 26px;margin-top:22px}
+.ci{display:flex;align-items:center;gap:10px;font-size:16px;padding:6px 0;border-bottom:1px solid #1a2330}
+.ci i{font-style:normal;font-family:var(--mono);font-size:10px;font-weight:700;border-radius:4px;padding:2px 6px;flex:none}
+.ci.ok i{background:var(--green);color:#03200f}
+.ci.open i{background:var(--amber);color:#2a1a02}
+.ci.open{color:var(--amber)}
+
+/* result */
+.res{width:100%;max-width:980px;border-radius:16px;padding:38px 44px 32px;border:1.5px solid;position:relative}
+.res .big{font-size:84px;font-weight:700;letter-spacing:.04em;line-height:1}
+.res .why{margin-top:22px}
+.res .why .lbl{color:inherit;opacity:.8}
+.res .why .v{font-size:30px;font-weight:700;margin-top:6px;color:var(--tx)}
+.res .meta{margin-top:12px;font-family:var(--mono);font-size:13px;color:var(--tx2)}
+.res.r-trade{background:var(--green-d);border-color:var(--green);color:var(--green)}
+.res.r-wait{background:var(--amber-d);border-color:var(--amber);color:var(--amber)}
+.res.r-no{background:var(--red-d);border-color:var(--red);color:var(--red)}
+.res.r-fs{background:var(--violet-d);border-color:var(--violet);color:var(--violet)}
+.res.r-normal{background:var(--blue-d);border-color:var(--blue);color:var(--blue)}
+.res .opts{margin-top:30px}
+.res .opt{color:var(--tx)}
+.res .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 18px;margin-top:22px}
+.res .sum div{border-top:1px solid rgba(255,255,255,.08);padding-top:6px}
+.res .sum span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--tx3);text-transform:uppercase}
+.res .sum b{font-family:var(--mono);font-size:14px;color:var(--tx)}
+.res .flow{margin-top:14px;font-family:var(--mono);font-size:14px;color:var(--tx2);letter-spacing:.04em}
+.plan{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+.plan div{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:10px 14px}
+.plan span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--tx3);text-transform:uppercase}
+.plan b{font-size:18px;color:var(--tx)}
+.plan .opt-note{grid-column:1/-1;border-color:#5a4a20}
+.plan .opt-note b{color:var(--test)}
+
+.banner{width:100%;max-width:980px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;background:var(--violet-d);border:1px solid var(--violet);border-radius:10px;padding:10px 16px}
+.banner b{font-family:var(--mono);letter-spacing:.14em;font-size:12px;color:var(--violet)}
+.banner span{font-family:var(--mono);letter-spacing:.14em;font-size:12px;color:var(--tx)}
+
+footer{display:flex;align-items:center;gap:10px;padding:10px 22px;border-top:1px solid var(--line);background:var(--bg2)}
+.fbtn{font-family:var(--mono);font-size:12px;letter-spacing:.12em;border:1px solid var(--line2);border-radius:8px;padding:10px 16px;color:var(--tx2);background:var(--panel)}
+.fbtn:hover{border-color:var(--cyan);color:var(--tx)}
+.fbtn.danger:hover{border-color:var(--red);color:var(--red)}
+.fbtn:disabled{opacity:.35;pointer-events:none}
+.keys{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--tx3);letter-spacing:.06em}
+.keys b{color:var(--tx2);font-weight:400;border:1px solid var(--line2);border-radius:4px;padding:0 5px;margin:0 3px}
+
+/* overlays */
+.ov{position:fixed;inset:0;background:var(--bg);z-index:20;display:flex;flex-direction:column;padding:22px}
+.ovhead{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.ovhead h3{font-size:22px;letter-spacing:.08em}
+.ovhead .x{margin-left:auto}
+.ovbody{flex:1;overflow:auto;min-height:0}
+.map{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,260px);gap:10px;min-width:max-content}
+.mcol{display:flex;flex-direction:column;gap:8px}
+.mcol h4{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--tx3);padding:6px 8px;background:var(--card);border-radius:6px;text-align:center}
+.mn{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:12.5px}
+.mn.vis{border-color:#245c5a}
+.mn.cur{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan)}
+.mn .mq{font-weight:700;color:var(--tx);margin-bottom:5px}
+.mn .ms{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--tx3);margin:-3px 0 5px}
+.mn .mo{font-family:var(--mono);font-size:10.5px;color:var(--tx2);display:flex;gap:6px;line-height:1.5}
+.mn .mo b{color:var(--tx);font-weight:400;flex:none}
+.mn .mo .no{color:var(--red)} .mn .mo .wait{color:var(--amber)} .mn .mo .fs{color:var(--violet)} .mn .mo .trade{color:var(--green)} .mn .mo .go{color:var(--cyan)}
+.rules{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.rule{display:flex;gap:16px;align-items:center;background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:16px 18px;font-size:16px}
+.rule i{font-style:normal;font-family:var(--mono);font-weight:700;padding:6px 10px;border-radius:6px;color:#06100f}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.lg{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;border:1px solid var(--line2);border-radius:8px;padding:8px 12px}
+.lg i{width:10px;height:10px;border-radius:50%}
+
+@media (max-width:1360px){ main{grid-template-columns:220px minmax(0,1fr) 250px} .q{font-size:38px} }
+@media (max-width:1100px){
+  body{overflow:auto;overflow-x:hidden}
+  #app{height:auto;min-height:100%}
+  main{grid-template-columns:1fr}
+  aside.l,aside.r{border:0;border-top:1px solid var(--line)}
+  aside.l{order:2} aside.r{order:3}
+  .hstate{display:none}
+  .progress{grid-auto-flow:row;grid-template-columns:repeat(5,1fr)}
+}
+@media (max-width:700px){
+  header,.progress,footer{padding-left:16px;padding-right:16px}
+  .center{padding:16px}
+  .qcard,.res{padding:24px 18px 20px}
+  .q{font-size:28px}
+  .opts.n2,.opts.n3,.opts.n4,.opts.list{grid-template-columns:1fr}
+  .opt{min-height:72px}.opt .t{font-size:24px}
+  .chk,.plan,.res .sum{grid-template-columns:1fr}
+  .res .big{font-size:52px}
+  .tfgrid{grid-template-columns:1fr}
+  .tfcard .tf{font-size:52px}
+  .brand h1{font-size:44px}
+  .keys{display:none}
+  .hact .hbtn:not(.keep){display:none}
+  .progress{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= START ================= -->
+<section id="start">
+  <div class="brand">
+    <div class="bar"></div>
+    <h1>CBR</h1>
+    <h2>LIVE EXECUTION</h2>
+    <p class="lbl">Trading Decision Cockpit · 15M / 30M / 1H</p>
+  </div>
+  <div class="tfgrid">
+    <button class="tfcard" data-tf="15M"><span class="lbl k">1</span><div class="tf">15M</div><div class="d">Timing · Conf Req · HV5</div></button>
+    <button class="tfcard" data-tf="30M"><span class="lbl k">2</span><div class="tf">30M</div><div class="d">1. Shift · HV5 · 2. Shift</div></button>
+    <button class="tfcard" data-tf="1H"><span class="lbl k">3</span><div class="tf">1H</div><div class="d">1M TP3 · ~50% PB · Shift</div></button>
+  </div>
+  <button class="fscard" data-tf="FSIFS"><b>FS / IFS</b><span>Big external 1M TP3 · Condition Change Route</span><span class="lbl">4</span></button>
+  <button class="resume hidden" id="resumeBtn"></button>
+  <div class="principles">
+    <div class="pr"><i style="background:var(--cyan)">01</i>Shift bestätigt valide Setups – er rettet kein invalides Setup.</div>
+    <div class="pr"><i style="background:var(--amber)">02</i>Pflichtkriterium invalid = NO TRADE. Nur Confirmation schwächer = stärkere Confirmation.</div>
+    <div class="pr"><i style="background:var(--violet)">03</i>Big external 1M TP3 + Condition Change = alten CBR beenden, neu über FS / IFS.</div>
+  </div>
+</section>
+
+<!-- ================= APP ================= -->
+<section id="app" class="hidden">
+  <header>
+    <div class="hbrand"><div class="bar"></div><div><b>CBR LIVE EXECUTION</b><small>DECISION COCKPIT</small></div></div>
+    <div class="tfpill" id="tfPill">15M</div>
+    <div class="hstate" id="hState"></div>
+    <div class="hact">
+      <button class="hbtn" id="mapBtn">SHOW MAP<kbd>M</kbd></button>
+      <button class="hbtn" id="rulesBtn">RULES<kbd>?</kbd></button>
+      <button class="hbtn keep" id="homeBtn">TIMEFRAME<kbd>T</kbd></button>
+    </div>
+  </header>
+  <nav class="progress" id="progress"></nav>
+  <main>
+    <aside class="l"><div class="lbl">Trade Session</div><div class="sgrid" id="stateList"></div></aside>
+    <div class="center" id="center"></div>
+    <aside class="r"><div class="lbl">Decision Trace</div><div class="trace" id="trace"></div></aside>
+  </main>
+  <footer>
+    <button class="fbtn" id="backBtn">BACK<kbd>⌫</kbd></button>
+    <button class="fbtn danger" id="resetBtn">RESET TRADE<kbd>R</kbd></button>
+    <button class="fbtn" id="infoBtn">RULE INFO<kbd>I</kbd></button>
+    <div class="keys"><b>1</b>–<b>4</b> Antwort <b>⌫</b> Zurück <b>R</b> Reset <b>M</b> Map <b>I</b> Info <b>T</b> Timeframe</div>
+  </footer>
+</section>
+
+<div class="ov hidden" id="mapOv">
+  <div class="ovhead"><h3 id="mapTitle">DECISION MAP</h3><span class="lbl">Cyan = aktueller Pfad</span><button class="hbtn x" data-close>CLOSE<kbd>ESC</kbd></button></div>
+  <div class="ovbody"><div class="map" id="map"></div></div>
+</div>
+<div class="ov hidden" id="rulesOv">
+  <div class="ovhead"><h3>CBR CORE RULES</h3><button class="hbtn x" data-close>CLOSE<kbd>ESC</kbd></button></div>
+  <div class="ovbody"><div class="rules">
+    <div class="rule"><i style="background:var(--cyan)">01</i>Shift bestätigt valide Setups – er rettet kein invalides Setup.</div>
+    <div class="rule"><i style="background:var(--amber)">02</i>Pflichtkriterium invalid = NO TRADE. Nur Confirmation schwächer = stärkere Confirmation.</div>
+    <div class="rule"><i style="background:var(--violet)">03</i>Big external 1M TP3 + Condition Change = alten CBR beenden und neu über FS / IFS bewerten.</div>
+    <div class="legend">
+      <div class="lg"><i style="background:var(--green)"></i>VALID / WEITER · TRADE</div>
+      <div class="lg"><i style="background:var(--amber)"></i>WAIT</div>
+      <div class="lg"><i style="background:var(--red)"></i>NO TRADE</div>
+      <div class="lg"><i style="background:var(--violet)"></i>CONDITION CHANGE · FS / IFS</div>
+      <div class="lg"><i style="background:var(--test)"></i>TEST / BACKTEST</div>
+    </div>
+  </div></div>
+</div>
+
+<script>
+/* =====================================================================
+   CBR LIVE EXECUTION – DECISION TREES
+   Quelle: CBR Live Execution Guide – Decision Map (S. 01–09).
+   Jeder Node: id, stage, q (Frage), sub, info, test, options[]
+   Option: t (Label), s (Unterzeile), next | result | jump, set (State), tr (Trace)
+   Ergebnisse: NO (gate), WAIT (wait, recheck), FS, TRADE
+   ===================================================================== */
+
+const STAGES = ['CONDITION','TYPE','1M TP3','AOI / ER','OE / CB','TIMING','SHIFT','ENTRY','SL / TP','FINAL'];
+const FS_STAGES = ['1M TP3','CONDITION NEU','AOI NEU','ER NEU','FS / IFS'];
+
+const NO   = (gate) => ({type:'NO', gate});
+const WAIT = (wait, recheck) => ({type:'WAIT', wait, recheck});
+const FS   = () => ({type:'FS'});
+const JA = 'JA', NEIN = 'NEIN';
+
+/* ---------- Teil 1/2: Condition -> Trade Type -> Big 1M TP3 Gate (S. 02 / 04 / 06) ---------- */
+function conditionNodes(tf){
+  const noise = tf==='15M' ? 'Interner Noise / erzwungene Legs?'
+              : tf==='30M' ? 'Kleine interne Swings als Legs?'
+              : 'Kleine interne Swings als 1H Legs?';
+  const legPct = tf==='15M' ? 'Gegenleg ≥75%?' : 'Leg ≥75%?';
+  return {
+    legs:{stage:'CONDITION', q:'2 klare, ähnliche, relevante Legs?', sub:'POTENZIELLER TRADE',
+      options:[
+        {t:JA, next:'noise', tr:'2 Legs valid'},
+        {t:NEIN, result:NO('Keine 2 klaren, ähnlichen, relevanten Legs')}]},
+    noise:{stage:'CONDITION', q:noise,
+      options:[
+        {t:JA, result:NO(tf==='15M'?'Interner Noise / erzwungene Legs':noise.replace('?',''))},
+        {t:NEIN, next:'cond', tr:'Kein interner Noise'}]},
+    cond:{stage:'CONDITION', q:'Condition bestimmen', sub:'Ranging Range oder Trending Range?',
+      info:'Condition bestimmen → RR: Ranging Range · TR: Trending Range. Trending Range? NEIN = NO TRADE.',
+      options:[
+        {t:'RR', s:'Ranging Range', next:'rr_leg', set:{cond:'RR'}, tr:'Ranging Range'},
+        {t:'TR', s:'Trending Range', next:'tr_ext', set:{cond:'TR'}, tr:'Trending Range'},
+        {t:'KEINE', s:'weder RR noch TR', result:NO('Keine Ranging / Trending Range')}]},
+    rr_leg:{stage:'CONDITION', q:legPct, sub:'Ranging Range',
+      options:[
+        {t:JA, next:'big', set:{type:'RANGE'}, tr:legPct.replace('?','')+' → RANGE'},
+        {t:NEIN, result:NO(legPct.replace('≥','<').replace('?',''))}]},
+    tr_ext:{stage:'CONDITION', q:'Externe HH/HL oder LH/LL?', sub:'Trending Range',
+      options:[
+        {t:JA, next:'corr', tr:'Externe Struktur valid'},
+        {t:NEIN, result:NO('Keine externe HH/HL bzw. LH/LL')}]},
+    corr:{stage:'CONDITION', q:'2 Corrections ca. <50%?', test:true,
+      options:[
+        {t:JA, next:'clean', set:{cond:'TR · Clean Trend'}, tr:'Clean Trend'},
+        {t:NEIN, next:'type_sel', set:{cond:'Normal TR'}, tr:'Normal TR'}]},
+    clean:{stage:'CONDITION', q:'Clean Trend: Counter?', test:true,
+      options:[
+        {t:JA, result:NO('Counter im Clean Trend')},
+        {t:NEIN, next:'big', set:{type:'PRO'}, tr:'PRO'}]},
+    type_sel:{stage:'TYPE', q:'Trade Type?', sub:'Normal TR → Trade Type fest',
+      options:[
+        {t:'PRO', next:'big', set:{type:'PRO'}, tr:'PRO'},
+        {t:'COUNTER', next:'big', set:{type:'COUNTER'}, tr:'COUNTER'}]},
+    big:{stage:'1M TP3', q:'Big 1M TP3 + Condition Change?', sub:'TRADE TYPE FEST: <b>{type}</b>',
+      info:'JA = STOP → FS / IFS. Alter CBR wird beendet. NEIN → AOI / ER (normaler CBR).',
+      options:[
+        {t:JA, result:FS(), tr:'Big 1M TP3 + Condition Change'},
+        {t:NEIN, next:'aoi', tr:'Kein Big 1M TP3 / CC'}]},
+    aoi:{route: s => s.type==='PRO' ? 'pro_er' : s.type==='RANGE' ? 'range_er' : 'cnt_ext'},
+  };
+}
+
+/* ---------- AOI / ER (S. 03 / 05 / 07 – identisch) ---------- */
+const AOI_NODES = {
+  pro_er:{stage:'AOI / ER', q:'ER?', sub:'PRO – AOI / ER',
+    info:'ER ≥61.8%? NEIN = NO TRADE. ER <75%? JA → FVG/O-C? · NEIN → AOI OK.',
+    options:[
+      {t:'<61.8%', result:NO('ER <61.8% (Pro)'), set:{er:'<61.8%'}},
+      {t:'61.8–75%', s:'→ FVG / O-C', next:'pro_fvg', set:{er:'61.8–75%'}, tr:'ER 61.8–75%'},
+      {t:'≥75%', s:'→ AOI OK', next:'oe30', set:{er:'≥75%', aoi:'VALID'}, tr:'ER ≥75% → AOI OK'}]},
+  pro_fvg:{stage:'AOI / ER', q:'FVG / O-C?', sub:'PRO – ER <75%',
+    options:[
+      {t:JA, next:'oe30', set:{aoi:'VALID'}, tr:'FVG/O-C → AOI OK'},
+      {t:NEIN, result:NO('Kein FVG / O-C (Pro)')}]},
+  range_er:{stage:'AOI / ER', q:'ER 75–120%?', sub:'RANGE – AOI / ER',
+    options:[
+      {t:JA, next:'range_fvg', set:{er:'75–120%'}, tr:'ER 75–120%'},
+      {t:NEIN, result:NO('ER außerhalb 75–120% (Range)')}]},
+  range_fvg:{stage:'AOI / ER', q:'FVG / O-C?', sub:'RANGE – ER 75–120%',
+    options:[
+      {t:JA, next:'oe30', set:{aoi:'VALID'}, tr:'FVG/O-C → AOI OK'},
+      {t:NEIN, result:NO('Kein FVG / O-C (Range)')}]},
+  cnt_ext:{stage:'AOI / ER', q:'External AOI?', sub:'COUNTER – AOI / ER',
+    options:[
+      {t:JA, next:'cnt_struct', tr:'External AOI'},
+      {t:NEIN, result:NO('Keine External AOI (Counter)')}]},
+  cnt_struct:{stage:'AOI / ER', q:'Structure?', sub:'COUNTER – External AOI',
+    options:[
+      {t:JA, next:'cnt_fvg', tr:'Structure'},
+      {t:NEIN, result:NO('Keine Structure (Counter)')}]},
+  cnt_fvg:{stage:'AOI / ER', q:'FVG / O-C?', sub:'COUNTER – Structure',
+    options:[
+      {t:JA, next:'oe30', set:{aoi:'VALID'}, tr:'FVG/O-C → AOI OK'},
+      {t:NEIN, result:NO('Kein FVG / O-C (Counter)')}]},
+};
+
+/* ---------- Entry -> SL / TP (alle TF identisch) ---------- */
+const EXEC_NODES = {
+  entry:{stage:'ENTRY', q:'ENTRY READY – Order?', sub:'Market Standard | Stop nur perfektes Setup',
+    options:[
+      {t:'MARKET', s:'Standard', next:'sl', set:{order:'MARKET'}, tr:'Entry Ready · Market'},
+      {t:'STOP', s:'nur perfektes Setup', next:'sl', set:{order:'STOP'}, tr:'Entry Ready · Stop'}]},
+  sl:{stage:'SL / TP', q:'SL external?',
+    options:[
+      {t:JA, next:'rr', set:{sl:'EXTERNAL'}, tr:'SL external'},
+      {t:NEIN, result:NO('SL nicht external')}]},
+  rr:{stage:'SL / TP', q:'RR ≥0.7?',
+    options:[
+      {t:JA, next:'tp', set:{rr:'≥0.7'}, tr:'RR ≥0.7'},
+      {t:NEIN, result:NO('RR <0.7'), set:{rr:'<0.7'}}]},
+  tp:{stage:'SL / TP', q:'TP ≤2R + Typ-Logik', sub:'TP setzen: max. 2R, nach Typ-Logik ({type})',
+    options:[
+      {t:'TP GESETZT', s:'≤2R + Typ-Logik', next:'final', set:{tp:'≤2R'}, tr:'TP ≤2R + Typ-Logik'}]},
+  final:{stage:'FINAL', kind:'final', q:'Alle Pflicht-Gates OK?', sub:'FINAL GATE – direkt vor dem Entry',
+    options:[
+      {t:JA, s:'→ TRADE', result:{type:'TRADE'}, tr:'Final Gate OK'},
+      {t:NEIN, s:'Gate fehlt → NO TRADE / WAIT', next:'final_fail', cls:'wait'}]},
+  final_fail:{stage:'FINAL', kind:'failsel', q:'Welches Gate fehlt?', sub:'Zurück zum Gate – Ergebnis nach Originalregel (NO TRADE / WAIT / FS-IFS)'},
+};
+
+/* ---------- 15M Teil 2/2 (S. 03) ---------- */
+const N15 = {
+  oe30:{stage:'OE / CB', q:'OE ≥30%?', sub:'OE / Candle Behaviour',
+    options:[
+      {t:JA, next:'startpb', set:{oe:'≥30%'}, tr:'OE ≥30%'},
+      {t:NEIN, result:WAIT('OE <30% – auf weitere Expansion warten.'), set:{oe:'<30%'}}]},
+  startpb:{stage:'OE / CB', q:'Start-PB 0–20%?',
+    info:'Start-PB 0–20%: JA → OE danach messen (ab Ende des Start-PB).',
+    options:[
+      {t:JA, s:'→ OE danach messen', next:'pb40', tr:'Start-PB 0–20% → danach messen'},
+      {t:NEIN, next:'pb40', tr:'Kein Start-PB'}]},
+  pb40:{stage:'OE / CB', q:'PB in OE >40%?',
+    options:[
+      {t:JA, result:NO('PB in OE >40%')},
+      {t:NEIN, next:'manypb', tr:'PB in OE ≤40%'}]},
+  manypb:{stage:'OE / CB', q:'Viele kleine PB?',
+    options:[
+      {t:JA, s:'→ Regression → Breakout', next:'regbo', tr:'Viele kleine PB'},
+      {t:NEIN, next:'wick', tr:'Keine vielen kleinen PB'}]},
+  regbo:{stage:'OE / CB', q:'Regression → Breakout?', sub:'Viele kleine PB',
+    options:[
+      {t:JA, next:'wick', tr:'Regression → Breakout'},
+      {t:NEIN, result:WAIT('Viele kleine PB – auf Regression → Breakout warten.')}]},
+  wick:{stage:'OE / CB', q:'Wick >30%?', sub:'Candle Behaviour',
+    options:[
+      {t:JA, result:NO('Wick >30%')},
+      {t:NEIN, next:'t15', set:{cb:'OK'}, tr:'Wick ≤30% → OE + CB valid'}]},
+  t15:{stage:'TIMING', q:'Timing?', sub:'Timing / Confirmation',
+    options:[
+      {t:'<30%', result:WAIT('Timing <30% – warten.'), set:{timing:'<30%'}},
+      {t:'30–50%', s:'→ CONF REQ: TP3', next:'early', set:{timing:'30–50%', conf:'TP3'}, tr:'Timing 30–50% → TP3'},
+      {t:'>50%', s:'→ A+ Check', next:'aplus', set:{timing:'>50%'}, tr:'Timing >50%'}]},
+  aplus:{stage:'TIMING', q:'>50%: A+ Setup?', test:true,
+    options:[
+      {t:JA, s:'→ CONF REQ: TP3 / IND', next:'early', set:{conf:'TP3 / IND'}, tr:'A+ → TP3 / IND'},
+      {t:NEIN, s:'→ CONF REQ: TP3', next:'early', set:{conf:'TP3'}, tr:'Kein A+ → TP3'}]},
+  early:{stage:'TIMING', q:'Early Entry valide?', test:true, sub:'CONF REQ: <b>{conf}</b>',
+    info:'Nur perfekt + klare Umkehr; Counter → TP3.',
+    options:[
+      {t:JA, s:'→ ENTRY READY (Test)', next:'entry', set:{shift:'Early Entry (TEST)'}, tr:'Early Entry valide (TEST)'},
+      {t:NEIN, s:'→ Geforderte Confirmation', next:'conf_da', tr:'Kein Early Entry'}]},
+  conf_da:{stage:'SHIFT', q:'Geforderte Confirmation da?', sub:'CONF REQ: <b>{conf}</b>',
+    options:[
+      {t:JA, next:'cc15', set:{shift:'{conf} da'}, tr:'Confirmation {conf} da'},
+      {t:NEIN, result:WAIT('Geforderte Confirmation ({conf}) noch nicht da – warten.')}]},
+  cc15:{stage:'SHIFT', q:'Condition Change?',
+    options:[
+      {t:JA, result:FS(), tr:'Condition Change'},
+      {t:NEIN, next:'hv5', tr:'Kein Condition Change'}]},
+  hv5:{stage:'SHIFT', q:'Zu weit / HV5 break?', sub:'No Chase',
+    options:[
+      {t:JA, result:WAIT('Zu weit / HV5 break – auf PB + Reaction warten.')},
+      {t:NEIN, next:'entry', tr:'No Chase / HV5 ok'}]},
+};
+
+/* ---------- 30M Teil 2/2 (S. 05) ---------- */
+const OE_SIMPLE = {
+  oe30:{stage:'OE / CB', q:'OE ≥30%?', sub:'OE / Candle Behaviour',
+    options:[
+      {t:JA, next:'pb40', set:{oe:'≥30%'}, tr:'OE ≥30%'},
+      {t:NEIN, result:WAIT('OE <30% – auf weitere Expansion warten.'), set:{oe:'<30%'}}]},
+  pb40:{stage:'OE / CB', q:'PB in OE >40%?',
+    options:[
+      {t:JA, result:NO('PB in OE >40%')},
+      {t:NEIN, next:'wick', tr:'PB in OE ≤40%'}]},
+};
+const N30 = {
+  ...OE_SIMPLE,
+  wick:{stage:'OE / CB', q:'Wick >30%?', sub:'Candle Behaviour',
+    options:[
+      {t:JA, result:NO('Wick >30%')},
+      {t:NEIN, next:'t30', set:{cb:'OK'}, tr:'Wick ≤30% → OE + CB valid'}]},
+  t30:{stage:'TIMING', q:'Timing ≥30%?', sub:'Timing / Required Confirmation',
+    options:[
+      {t:JA, next:'aplus30', set:{timing:'≥30%'}, tr:'Timing ≥30%'},
+      {t:NEIN, result:WAIT('Timing <30% – warten.'), set:{timing:'<30%'}}]},
+  aplus30:{stage:'TIMING', q:'A+ Setup?', test:true,
+    info:'Early Entry Test: nur perfekt; Counter → TP3, Pro/Range möglich.',
+    options:[
+      {t:JA, s:'→ TP3 oder 2. IND Shift / neue 15M', next:'shift1', set:{conf:'TP3 oder 2. IND Shift / neue 15M'}, tr:'A+ → TP3 oder 2. IND Shift'},
+      {t:NEIN, s:'→ Required: TP3', next:'shift1', set:{conf:'TP3'}, tr:'Kein A+ → TP3'}]},
+  shift1:{stage:'SHIFT', q:'Beim 1. Shift: Cond + AOI + OE + CB valid?', sub:'REQUIRED CONFIRMATION: <b>{conf}</b>',
+    info:'Shift bestätigt valide Setups – er rettet kein invalides Setup. NEIN → NO ENTRY → 2. Shift.',
+    options:[
+      {t:JA, next:'hv5_30', set:{shift:'1. Shift'}, tr:'1. Shift: alles valid'},
+      {t:NEIN, s:'→ NO ENTRY → 2. Shift', result:WAIT('NO ENTRY beim 1. Shift – auf 2. Shift warten.', 'shift2')},
+      {t:'KEIN SHIFT', s:'1. Shift noch nicht da', result:WAIT('Required Confirmation ({conf}) noch nicht da – warten.')}]},
+  hv5_30:{stage:'SHIFT', q:'HV5 bricht 1. Shift?',
+    options:[
+      {t:JA, s:'→ PB → Reaction → 2. Shift', result:WAIT('HV5 bricht 1. Shift – PB → Reaction → 2. Shift / neue 15M abwarten.', 'shift2')},
+      {t:NEIN, next:'cc30', set:{shift:'1. Shift hält'}, tr:'HV5 ok → Shift valid / hält'}]},
+  shift2:{stage:'SHIFT', q:'Nach 2. Shift: Shift valid / hält?', sub:'2. Shift / neue 15M',
+    options:[
+      {t:JA, next:'cc30', set:{shift:'2. Shift hält'}, tr:'2. Shift valid / hält'},
+      {t:NEIN, result:WAIT('2. Shift noch nicht valid / hält nicht – warten.', 'shift2')}]},
+  cc30:{stage:'SHIFT', q:'Condition Change?',
+    options:[
+      {t:JA, result:FS(), tr:'Condition Change'},
+      {t:NEIN, next:'entry', tr:'Kein Condition Change'}]},
+};
+
+/* ---------- 1H Teil 2/2 (S. 07) ---------- */
+const N1H = {
+  ...OE_SIMPLE,
+  wick:{stage:'OE / CB', q:'Wick >30%?', sub:'Candle Behaviour',
+    options:[
+      {t:JA, result:NO('Wick >30%')},
+      {t:NEIN, next:'t1h', set:{cb:'OK'}, tr:'Wick ≤30% → OE + CB valid'}]},
+  t1h:{stage:'TIMING', q:'Timing ≥30%?', sub:'Timing / 1M TP3 Gate',
+    options:[
+      {t:JA, next:'tp3_1h', set:{timing:'≥30%'}, tr:'Timing ≥30%'},
+      {t:NEIN, result:WAIT('Timing <30% – warten.'), set:{timing:'<30%'}}]},
+  tp3_1h:{stage:'TIMING', q:'1M TP3?', sub:'1M TP3 Gate',
+    options:[
+      {t:JA, next:'extbreak', set:{conf:'1M TP3'}, tr:'1M TP3'},
+      {t:NEIN, result:WAIT('Auf 1M TP3 warten.')}]},
+  extbreak:{stage:'TIMING', q:'External break + Condition Change?',
+    info:'JA = STOP → FS / IFS. NEIN → TP3 VALID → Reaction → Pullback ~50% → Shift Indicator.',
+    options:[
+      {t:JA, result:FS(), tr:'External break + Condition Change'},
+      {t:NEIN, next:'reaction', set:{conf:'1M TP3 VALID'}, tr:'TP3 VALID'}]},
+  reaction:{stage:'SHIFT', q:'Reaction?', sub:'1H Entry Sequence: Reaction → Pullback ~50% → Shift Indicator',
+    options:[
+      {t:JA, next:'pb50', tr:'Reaction'},
+      {t:NEIN, result:WAIT('Auf Reaction nach 1M TP3 warten.')}]},
+  pb50:{stage:'SHIFT', q:'Pullback ~50%?', sub:'1H Entry Sequence',
+    options:[
+      {t:JA, next:'shiftind', tr:'Pullback ~50%'},
+      {t:NEIN, result:WAIT('Auf Pullback ~50% warten.')}]},
+  shiftind:{stage:'SHIFT', q:'Shift Indicator?', sub:'1H Entry Sequence',
+    options:[
+      {t:JA, next:'entry', set:{shift:'Shift Indicator'}, tr:'Shift Indicator'},
+      {t:NEIN, result:WAIT('Auf Shift Indicator warten.')}]},
+};
+
+/* ---------- Final Gates (S. 09) ---------- */
+const FINAL = {
+  '15M':[
+    {l:'Condition / Typ', n:['legs']},
+    {l:'AOI / ER', n:['pro_er','range_er','cnt_ext']},
+    {l:'OE + CB', n:['oe30']},
+    {l:'Timing', n:['t15']},
+    {l:'Required Shift', n:['conf_da']},
+    {l:'No Condition Change', n:['cc15']},
+    {l:'No Chase / HV5', n:['hv5']},
+    {l:'External SL', n:['sl']},
+    {l:'RR ≥0.7 / TP ≤2R', n:['rr']}],
+  '30M':[
+    {l:'Condition / Typ', n:['legs']},
+    {l:'AOI / ER', n:['pro_er','range_er','cnt_ext']},
+    {l:'OE + CB', n:['oe30']},
+    {l:'Timing ≥30%', n:['t30']},
+    {l:'1./2. Shift korrekt', n:['shift1','shift2']},
+    {l:'HV5 geklärt', n:['hv5_30','shift2']},
+    {l:'No Condition Change', n:['cc30']},
+    {l:'External SL', n:['sl']},
+    {l:'RR ≥0.7 / TP ≤2R', n:['rr']}],
+  '1H':[
+    {l:'Condition / Typ', n:['legs']},
+    {l:'AOI / ER', n:['pro_er','range_er','cnt_ext']},
+    {l:'OE + CB', n:['oe30']},
+    {l:'Timing ≥30%', n:['t1h']},
+    {l:'1M TP3', n:['tp3_1h']},
+    {l:'No Condition Change', n:['extbreak']},
+    {l:'Reaction + ~50% PB', n:['reaction','pb50']},
+    {l:'Shift Indicator', n:['shiftind']},
+    {l:'External SL + RR', n:['sl','rr']}],
+};
+
+/* ---------- FS / IFS Route (S. 08) ---------- */
+const FS_NODES = {
+  fs_cc:{stage:'1M TP3', q:'Big external 1M TP3: Condition Change?', sub:'FS / IFS – Condition Change Map',
+    options:[
+      {t:JA, s:'→ alten CBR löschen', result:FS(), tr:'Big ext. 1M TP3 + Condition Change'},
+      {t:NEIN, s:'→ normaler CBR', result:{type:'NORMAL'}, tr:'Kein Condition Change'}]},
+  fs_cond:{stage:'CONDITION NEU', q:'Condition neu?', sub:'Alter CBR gelöscht – neue Struktur',
+    options:[
+      {t:'BULL', next:'fs_aoi', set:{ncond:'BULL'}, tr:'Condition neu: Bull'},
+      {t:'BEAR', next:'fs_aoi', set:{ncond:'BEAR'}, tr:'Condition neu: Bear'}]},
+  fs_aoi:{stage:'AOI NEU', q:'AOI neu', sub:'Neue AOI auf neuer Struktur markieren',
+    info:'FS – AOIs: 3M FVG + Open/Close.',
+    options:[{t:'AOI NEU GESETZT', next:'fs_er', set:{naoi:'NEU'}, tr:'AOI neu'}]},
+  fs_er:{stage:'ER NEU', q:'ER neu', sub:'ER auf neuer Struktur messen',
+    options:[{t:'ER NEU GEMESSEN', next:'fs_plan', set:{ner:'NEU'}, tr:'ER neu'}]},
+  fs_plan:{route: s => s.route==='IFS' ? 'ifs_res' : 'fs_res'},
+  fs_res:{stage:'FS / IFS', terminal:{type:'PLAN'}},
+  ifs_res:{stage:'FS / IFS', terminal:{type:'PLAN'}},
+};
+
+const TREES = {
+  '15M':{start:'legs', stages:STAGES, nodes:{...conditionNodes('15M'), ...AOI_NODES, ...N15, ...EXEC_NODES}},
+  '30M':{start:'legs', stages:STAGES, nodes:{...conditionNodes('30M'), ...AOI_NODES, ...N30, ...EXEC_NODES}},
+  '1H': {start:'legs', stages:STAGES, nodes:{...conditionNodes('1H'),  ...AOI_NODES, ...N1H, ...EXEC_NODES}},
+  'FSIFS':{start:'fs_cc', stages:FS_STAGES, nodes:FS_NODES},
+};
+
+/* =====================================================================
+   ENGINE
+   ===================================================================== */
+const LS_KEY = 'cbr-live-execution-v1';
+let S = null;          // aktuelle Session
+let infoOpen = false;
+
+const clone = o => JSON.parse(JSON.stringify(o));
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fill = (txt, st, html) => String(txt||'').replace(/\{(\w+)\}/g, (_,k) => html ? esc(st[k] || '—') : (st[k] || '—'));
+
+function newSession(tree, extra){
+  return {tree, node:null, result:null, state:Object.assign({}, extra||{}), trace:[], hist:[], closed:false};
+}
+function snap(){ return clone({node:S.node, result:S.result, state:S.state, trace:S.trace}); }
+function restore(x){ S.node=x.node; S.result=x.result; S.state=x.state; S.trace=x.trace; }
+function T(){ return TREES[S.tree]; }
+function resolve(id){
+  let n = T().nodes[id], guard = 0;
+  while(n && n.route && guard++ < 5){ id = n.route(S.state); n = T().nodes[id]; }
+  return id;
+}
+function goNode(id){
+  id = resolve(id);
+  const n = T().nodes[id];
+  S.node = id; S.result = n.terminal ? Object.assign({from:id}, n.terminal) : null;
+}
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify({S, last:S && S.tree})); }catch(e){} }
+function load(){ try{ const d = JSON.parse(localStorage.getItem(LS_KEY)||'null'); return d; }catch(e){ return null; } }
+function clearLS(){ try{ localStorage.removeItem(LS_KEY); }catch(e){} }
+
+function startTree(tf){
+  S = newSession(tf);
+  goNode(T().start);
+  infoOpen = false;
+  showApp(); render(); save();
+}
+function startFS(route){
+  // ALTER CBR BEENDET: neue Session ohne alte Werte, keine History zum alten CBR
+  S = newSession('FSIFS', {route});
+  S.closed = true;
+  S.trace.push({x:'ALTER CBR BEENDET', k:'cc'});
+  S.trace.push({x:route+' gestartet', k:'cc'});
+  goNode('fs_cond');
+  render(); save();
+}
+
+function choose(i){
+  const n = T().nodes[S.node];
+  let opts = optionsFor(n);
+  if(S.result) opts = resultOptions();
+  const o = opts[i];
+  if(!o) return;
+  if(o.action){ o.action(); return; }
+  if(o.jump){ jumpTo(o.jump); return; }
+  S.hist.push(snap());
+  if(o.set){ for(const k in o.set) S.state[k] = fill(o.set[k], S.state); }
+  if(o.tr) S.trace.push({x:fill(o.tr, S.state), k: o.result ? (o.result.type==='FS'?'cc':o.result.type==='TRADE'?'ok':'nt') : 'ok', st:n.stage});
+  if(o.result){
+    const r = clone(o.result);
+    r.from = S.node; r.stage = n.stage;
+    if(r.wait) r.wait = fill(r.wait, S.state);
+    if(r.type==='NO') S.trace.push({x:r.gate, k:'no', st:n.stage});
+    if(r.type==='WAIT') S.trace.push({x:'WAIT: '+r.wait, k:'wait', st:n.stage});
+    S.result = r;
+  } else if(o.next){
+    goNode(o.next);
+  }
+  infoOpen = false;
+  render(); save();
+}
+function back(){
+  if(!S || !S.hist.length) return;
+  restore(S.hist.pop());
+  infoOpen = false; render(); save();
+}
+function jumpTo(ids){
+  ids = [].concat(ids);
+  // frühesten Snapshot dieses Gates suchen -> zurückspulen (State wie damals)
+  for(let i=0;i<S.hist.length;i++){
+    if(ids.includes(S.hist[i].node) && !S.hist[i].result){
+      restore(S.hist[i]); S.hist = S.hist.slice(0,i);
+      infoOpen=false; render(); save(); return;
+    }
+  }
+  // Gate noch nicht besucht -> dorthin weiter
+  S.hist.push(snap());
+  goNode(ids[0]);
+  infoOpen=false; render(); save();
+}
+function recheck(){
+  const r = S.result; if(!r) return;
+  const target = r.recheck || r.from;
+  if(r.recheck && r.recheck!==r.from){
+    // neues Gate (z.B. 2. Shift): Ergebnis verlassen, Zielknoten öffnen
+    S.hist.push(snap());
+    S.trace.push({x:'Erneut prüfen → '+(T().nodes[target].q), k:'nt'});
+    goNode(target);
+    infoOpen=false; render(); save(); return;
+  }
+  // zum auslösenden Gate zurück (State wie vor der Antwort)
+  for(let i=S.hist.length-1;i>=0;i--){
+    if(S.hist[i].node===target && !S.hist[i].result){
+      restore(S.hist[i]); S.hist = S.hist.slice(0,i);
+      infoOpen=false; render(); save(); return;
+    }
+  }
+  goNode(target); render(); save();
+}
+function resetTrade(){
+  if(!S) return;
+  const tf = S.tree==='FSIFS' ? 'FSIFS' : S.tree;
+  clearLS();
+  startTree(tf);
+}
+function home(){
+  S = null; clearLS();
+  $('app').classList.add('hidden'); $('start').classList.remove('hidden');
+  closeOv(); updateResume();
+}
+
+/* ---------- options ---------- */
+function optionsFor(n){
+  if(!n) return [];
+  if(n.kind==='failsel'){
+    return FINAL[S.tree].map(it => ({t:it.l, s:'→ zurück zum Gate', jump:it.n, cls:'wait'}));
+  }
+  return n.options || [];
+}
+function optClass(o){
+  if(o.cls) return o.cls;
+  if(o.result){
+    return {NO:'no', WAIT:'wait', FS:'fs', TRADE:'trade', NORMAL:'go'}[o.result.type] || 'go';
+  }
+  return 'go';
+}
+function optSub(o){
+  if(o.s) return o.s;
+  if(o.result){
+    return {NO:'→ NO TRADE', WAIT:'→ WAIT', FS:'→ STOP · FS / IFS', TRADE:'→ TRADE', NORMAL:'→ NORMALER CBR'}[o.result.type];
+  }
+  return '→ weiter';
+}
+function resultOptions(){
+  const r = S.result;
+  const nt = {t:'NEUER TRADE', s:'Reset · gleicher Timeframe', cls:'go', action:resetTrade};
+  const bk = {t:'ZURÜCK', s:'letzte Entscheidung ändern', cls:'go', action:back};
+  if(r.type==='WAIT') return [{t:'ERNEUT PRÜFEN', s:'→ '+fill(T().nodes[r.recheck||r.from].q, S.state), cls:'wait', action:recheck}, bk, nt];
+  if(r.type==='NO') return [nt, bk];
+  if(r.type==='TRADE') return [nt, bk];
+  if(r.type==='FS') return [
+    {t:'FS STARTEN', s:'Shift-Richtung', cls:'fs', action:()=>startFS('FS')},
+    {t:'IFS STARTEN', s:'Korrektur', cls:'fs', action:()=>startFS('IFS')},
+    bk];
+  if(r.type==='NORMAL') return [
+    {t:'15M', s:'normaler CBR', cls:'go', action:()=>startTree('15M')},
+    {t:'30M', s:'normaler CBR', cls:'go', action:()=>startTree('30M')},
+    {t:'1H',  s:'normaler CBR', cls:'go', action:()=>startTree('1H')},
+    bk];
+  if(r.type==='PLAN') return [{t:'NEUER TRADE', s:'zurück zur Timeframe-Auswahl', cls:'go', action:home}, bk];
+  return [nt];
+}
+
+/* =====================================================================
+   RENDER
+   ===================================================================== */
+const STATE_FIELDS = [
+  ['tf','Timeframe'],['stage','Stage'],['cond','Condition'],['type','Trade Type'],['er','ER'],['aoi','AOI'],
+  ['oe','OE'],['cb','Candle B.'],['timing','Timing'],['conf','Confirmation'],['shift','Shift / Entry'],
+  ['order','Order'],['sl','SL'],['rr','RR'],['tp','TP']];
+const FS_FIELDS = [['tf','Route'],['stage','Stage'],['old','Alter CBR'],['route','FS / IFS'],['ncond','Condition neu'],['naoi','AOI neu'],['ner','ER neu']];
+
+function curStage(){
+  if(S.result && S.result.stage) return S.result.stage;
+  const n = T().nodes[S.node]; return n ? n.stage : '';
+}
+function resCls(){
+  if(!S.result) return '';
+  return {NO:'r-no', WAIT:'r-wait', FS:'r-fs', TRADE:'r-trade', NORMAL:'', PLAN:'r-fs'}[S.result.type]||'';
+}
+
+function render(){
+  if(!S) return;
+  const tree = T(), st = S.state, stage = curStage();
+  const isFS = S.tree==='FSIFS';
+  // header
+  const pill = $('tfPill'); pill.textContent = isFS ? 'FS / IFS' : S.tree; pill.classList.toggle('fs', isFS);
+  const hs = isFS
+    ? [['Route', st.route||'—'],['Stage', stage],['Condition neu', st.ncond||'—']]
+    : [['Timeframe', S.tree],['Current Stage', stage],['Trade Type', st.type||'—'],['Condition', st.cond||'—']];
+  $('hState').innerHTML = hs.map(([k,v]) => `<div class="hs"><div class="lbl">${k}</div><div class="v">${esc(v)}</div></div>`).join('');
+  // progress
+  const si = tree.stages.indexOf(stage);
+  $('progress').innerHTML = tree.stages.map((s,i) =>
+    `<div class="stg ${i<si?'done':''} ${i===si?'cur '+resCls():''}">${s}</div>`).join('');
+  // state list
+  const fields = isFS ? FS_FIELDS : STATE_FIELDS;
+  const vals = Object.assign({}, st, {tf: isFS?'FS / IFS':S.tree, stage, old: isFS?'BEENDET':''});
+  $('stateList').innerHTML = fields.map(([k,l]) => {
+    const v = vals[k]; let c = v ? '' : 'na';
+    if(v && /VALID|OK|EXTERNAL|≥0\.7|hält|da$/.test(v)) c='ok';
+    if(k==='type' && v) c='cy';
+    if((k==='old'||k==='route') && v) c='vi';
+    if(v && /<30%|<0\.7|TEST/.test(v)) c='am';
+    return `<div class="srow"><span>${l}</span><b class="${c}">${esc(v||'—')}</b></div>`;
+  }).join('');
+  // trace
+  let lastSt = null, th = '';
+  S.trace.forEach(t => {
+    if(t.st && t.st!==lastSt){ th += `<div class="tr stg-h">${esc(t.st)}</div>`; lastSt = t.st; }
+    const ic = {ok:'✓', no:'✕', wait:'◷', cc:'◆', nt:'→'}[t.k] || '✓';
+    th += `<div class="tr ${t.k}"><i>${ic}</i><span>${esc(t.x)}</span></div>`;
+  });
+  if(!S.result){ const n = tree.nodes[S.node]; th += `<div class="tr now"><i>→</i><span>${esc(fill(n.q, st).replace(/<[^>]+>/g,''))}</span></div>`; }
+  $('trace').innerHTML = th || '<div class="tr"><span class="lbl">noch keine Entscheidung</span></div>';
+  $('trace').parentElement.scrollTop = 1e6;
+  // center
+  $('center').innerHTML = (S.closed ? `<div class="banner"><b>OLD CBR CLOSED</b><span>NEW STRUCTURE EVALUATION</span></div>` : '')
+    + (S.result ? renderResult() : renderNode());
+  bindCenter();
+  $('backBtn').disabled = !S.hist.length;
+}
+
+function optsHtml(opts, listMode){
+  const n = opts.length;
+  const cls = listMode ? 'list' : 'n'+Math.min(n,4);
+  return `<div class="opts ${cls}">` + opts.map((o,i) =>
+    `<button class="opt ${optClass(o)}" data-i="${i}"><span class="k">${i+1}</span><span class="t">${esc(o.t)}</span><span class="s">${esc(optSub(o))}</span></button>`
+  ).join('') + `</div>`;
+}
+
+function renderNode(){
+  const n = T().nodes[S.node], st = S.state;
+  const accent = n.stage==='FINAL' ? 'var(--green)' : (S.tree==='FSIFS' ? 'var(--violet)' : (n.test ? 'var(--test)' : 'var(--cyan)'));
+  let h = `<div class="qcard" style="--accent:${accent}">`;
+  h += `<div class="qhead"><span class="lbl">${esc(n.stage)}</span>${n.test?'<span class="tag test">TEST</span>':''}`;
+  if(n.info) h += `<button class="ibtn ${infoOpen?'on':''}" id="ibtn" title="Info (I)">i</button>`;
+  h += `</div>`;
+  h += `<div class="q">${esc(fill(n.q, st))}</div>`;
+  if(n.sub) h += `<div class="qsub">${fill(n.sub, st, true)}</div>`;
+  if(n.info && infoOpen) h += `<div class="info">${esc(n.info)}</div>`;
+  if(n.kind==='final'){
+    const items = FINAL[S.tree];
+    const visited = new Set(S.hist.map(x => x.node));
+    h += `<div class="lbl" style="margin-top:20px">${S.tree} FINAL GATE</div><div class="chk">` + items.map(it => {
+      const ok = it.n.some(id => visited.has(id));
+      return `<div class="ci ${ok?'ok':'open'}"><i>${ok?'OK':'PRÜFEN'}</i>${esc(it.l)}</div>`;
+    }).join('') + `</div>`;
+    const open = items.filter(it => !it.n.some(id => visited.has(id))).length;
+    if(open) h += `<div class="ctx" style="color:var(--amber)">${open} Gate(s) im Pfad nicht abgefragt – vor TRADE manuell prüfen.</div>`;
+  }
+  const opts = optionsFor(n);
+  h += optsHtml(opts, n.kind==='failsel');
+  h += `</div>`;
+  return h;
+}
+
+function renderResult(){
+  const r = S.result, st = S.state;
+  let h = '';
+  if(r.type==='TRADE'){
+    h = `<div class="res r-trade"><div class="lbl">${S.tree} · FINAL GATE OK</div><div class="big">TRADE</div>
+      <div class="sum">${[['Condition',st.cond],['Type',st.type],['ER',st.er],['Timing',st.timing],['Confirmation',st.conf],['Shift / Entry',st.shift],['Order',st.order],['SL',st.sl],['RR / TP',(st.rr||'—')+' / '+(st.tp||'—')]]
+        .map(([k,v])=>`<div><span>${k}</span><b>${esc(v||'—')}</b></div>`).join('')}</div>`;
+  } else if(r.type==='WAIT'){
+    h = `<div class="res r-wait"><div class="lbl">WAIT · ${esc(r.stage||'')}</div><div class="big">WAIT</div>
+      <div class="why"><div class="lbl">Warte auf</div><div class="v">${esc(r.wait)}</div></div>`;
+  } else if(r.type==='NO'){
+    h = `<div class="res r-no"><div class="lbl">NO TRADE</div><div class="big">NO TRADE</div>
+      <div class="why"><div class="lbl">Failed Gate</div><div class="v">${esc(r.gate)}</div></div>
+      <div class="meta">Stage: ${esc(r.stage||'')}</div>`;
+  } else if(r.type==='FS'){
+    h = `<div class="res r-fs"><div class="lbl">BIG EXTERNAL 1M TP3 + CONDITION CHANGE</div><div class="big">FS / IFS</div>
+      <div class="why"><div class="v">ALTER CBR BEENDET</div></div>
+      <div class="flow">Condition neu → AOI neu → ER neu → FS / IFS</div>`;
+  } else if(r.type==='NORMAL'){
+    h = `<div class="res r-normal"><div class="lbl">KEIN CONDITION CHANGE</div><div class="big">NORMALER CBR</div>
+      <div class="flow">Weiter im normalen CBR – Timeframe wählen.</div>`;
+  } else if(r.type==='PLAN'){
+    const fs = st.route!=='IFS', bull = st.ncond==='BULL';
+    const items = fs ? [
+      ['Richtung', bull ? 'Bull → LONG' : 'Bear → SHORT'],
+      ['Entry', '1M Shift Entry'],
+      ['SL', 'external'],
+      ['AOIs', '3M FVG + Open/Close'],
+      ['TP', 'nach Struktur'],
+      ['Basis', 'Shift-Richtung']
+    ] : [
+      ['Richtung', bull ? 'Bull → bearish Corr.' : 'Bear → bullish Corr.'],
+      ['Orientierung', '~50%'],
+      ['Basis', 'Korrektur'],
+      ['Condition neu', st.ncond]
+    ];
+    h = `<div class="res r-fs"><div class="lbl">NEW STRUCTURE · CONDITION ${esc(st.ncond||'')} · AOI NEU · ER NEU</div><div class="big">${fs?'FS':'IFS'}</div>
+      <div class="plan">${items.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}
+      <div class="opt-note"><span>OPTION · TEST</span><b>Früher Entry nur wenn Shift-Aufbau klar</b></div></div>`;
+  }
+  h += optsHtml(resultOptions()) + `</div>`;
+  return h;
+}
+
+function bindCenter(){
+  $('center').querySelectorAll('.opt').forEach(b => b.addEventListener('click', () => choose(+b.dataset.i)));
+  const ib = $('ibtn'); if(ib) ib.addEventListener('click', toggleInfo);
+}
+function toggleInfo(){
+  if(!S || S.result) { openOv('rulesOv'); return; }
+  const n = T().nodes[S.node];
+  if(!n.info){ openOv('rulesOv'); return; }
+  infoOpen = !infoOpen; render();
+}
+
+/* ---------- MAP ---------- */
+function targetLabel(o){
+  if(o.result){ const r=o.result; return {cls:optClass(o), txt: r.type==='NO'?'NO TRADE':r.type==='WAIT'?'WAIT':r.type==='FS'?'FS / IFS':r.type==='TRADE'?'TRADE':'NORMALER CBR'}; }
+  if(o.next){
+    const tn = T().nodes[o.next];
+    if(tn && tn.route) return {cls:'go', txt: o.next==='aoi' ? '→ AOI / ER nach Trade Type' : '→ FS / IFS Plan'};
+    if(tn && tn.terminal) return {cls:'fs', txt:'FS / IFS PLAN'};
+    return {cls:'go', txt:'→ '+(tn ? fill(tn.q,{}).replace(/\{.*?\}/g,'') : o.next)};
+  }
+  return {cls:'go', txt:''};
+}
+function renderMap(){
+  const tree = T();
+  const visited = new Set(S.hist.map(x=>x.node));
+  $('mapTitle').textContent = (S.tree==='FSIFS'?'FS / IFS':S.tree) + ' DECISION MAP';
+  $('map').innerHTML = tree.stages.map(sg => {
+    const ns = Object.entries(tree.nodes).filter(([id,n]) => n.stage===sg && n.options);
+    if(!ns.length) return '';
+    return `<div class="mcol"><h4>${sg}</h4>` + ns.map(([id,n]) =>
+      `<div class="mn ${visited.has(id)?'vis':''} ${id===S.node&&!S.result?'cur':''}">
+        <div class="mq">${esc(fill(n.q,S.state))}${n.test?' <span class="tag test">TEST</span>':''}</div>
+        ${n.sub?`<div class="ms">${esc(fill(n.sub,S.state).replace(/<[^>]+>/g,''))}</div>`:''}
+        ${n.options.map(o => { const t = targetLabel(o); return `<div class="mo"><b>${esc(o.t)}</b><span class="${t.cls}">${esc(t.txt)}</span></div>`; }).join('')}
+      </div>`).join('') + `</div>`;
+  }).join('');
+}
+
+/* ---------- overlays ---------- */
+function openOv(id){ closeOv(); if(id==='mapOv'){ if(!S) return; renderMap(); } $(id).classList.remove('hidden'); }
+function closeOv(){ document.querySelectorAll('.ov').forEach(o => o.classList.add('hidden')); }
+function anyOv(){ return [...document.querySelectorAll('.ov')].some(o => !o.classList.contains('hidden')); }
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeOv));
+document.querySelectorAll('.ov').forEach(o => o.addEventListener('click', e => { if(e.target===o) closeOv(); }));
+
+/* ---------- start / wiring ---------- */
+function showApp(){ $('start').classList.add('hidden'); $('app').classList.remove('hidden'); }
+document.querySelectorAll('[data-tf]').forEach(b => b.addEventListener('click', () => startTree(b.dataset.tf)));
+$('backBtn').addEventListener('click', back);
+$('resetBtn').addEventListener('click', resetTrade);
+$('infoBtn').addEventListener('click', toggleInfo);
+$('mapBtn').addEventListener('click', () => openOv('mapOv'));
+$('rulesBtn').addEventListener('click', () => openOv('rulesOv'));
+$('homeBtn').addEventListener('click', home);
+
+function updateResume(){
+  const d = load(), b = $('resumeBtn');
+  if(d && d.S){
+    const lab = d.S.tree==='FSIFS' ? 'FS / IFS' : d.S.tree;
+    b.textContent = `LETZTEN TRADE FORTSETZEN · ${lab} · ${d.S.result ? d.S.result.type : 'offen'}  (Enter)`;
+    b.classList.remove('hidden');
+  } else b.classList.add('hidden');
+}
+$('resumeBtn').addEventListener('click', () => { const d = load(); if(d && d.S){ S = d.S; showApp(); render(); } });
+
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key;
+  if(k==='Escape'){ closeOv(); return; }
+  if(!S){ // start screen
+    const map = {'1':'15M','2':'30M','3':'1H','4':'FSIFS'};
+    if(map[k]){ e.preventDefault(); startTree(map[k]); }
+    if(k==='Enter' && !$('resumeBtn').classList.contains('hidden')){ e.preventDefault(); $('resumeBtn').click(); }
+    return;
+  }
+  if(anyOv()){ if(k==='m'||k==='M'||k==='?'){ closeOv(); } return; }
+  if(/^[1-9]$/.test(k)){ e.preventDefault(); const b = $('center').querySelector(`.opt[data-i="${+k-1}"]`); if(b){ b.classList.add('flash'); choose(+k-1); } return; }
+  if(k==='Backspace'){ e.preventDefault(); back(); return; }
+  if(k==='r'||k==='R'){ resetTrade(); return; }
+  if(k==='m'||k==='M'){ openOv('mapOv'); return; }
+  if(k==='i'||k==='I'){ toggleInfo(); return; }
+  if(k==='?'){ openOv('rulesOv'); return; }
+  if(k==='t'||k==='T'){ home(); return; }
+});
+
+// letzter Stand
+(function init(){
+  const d = load();
+  if(d && d.S && TREES[d.S.tree] && T_ok(d.S)){ S = d.S; showApp(); render(); }
+  else updateResume();
+  function T_ok(s){ return !!TREES[s.tree].nodes[s.node]; }
+})();
+
+// Export für Tests
+window.CBR = {TREES, FINAL, STAGES};
+</script>
+</body>
+</html>
