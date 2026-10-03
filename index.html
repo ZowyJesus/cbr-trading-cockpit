@@ -76,6 +76,7 @@ header{display:flex;align-items:center;gap:20px;padding:12px 22px;border-bottom:
 .stg.cur.r-no{background:var(--red);color:#2a0710}
 .stg.cur.r-wait{background:var(--amber);color:#2a1a02}
 .stg.cur.r-fs{background:var(--violet);color:#120a2a}
+.stg.cur.r-review{background:var(--tx2);color:var(--bg)}
 .stg.cur.r-trade{background:var(--green);color:#03200f}
 
 main{display:grid;grid-template-columns:260px minmax(0,1fr) 300px;min-height:0}
@@ -91,7 +92,7 @@ aside.r{border-left:1px solid var(--line);background:var(--bg2)}
 .trace{margin-top:10px;display:flex;flex-direction:column;gap:3px;font-size:12.5px}
 .tr{display:flex;gap:8px;align-items:baseline;color:var(--tx2)}
 .tr i{font-style:normal;font-family:var(--mono);font-size:11px;width:12px;flex:none}
-.tr.ok i{color:var(--green)} .tr.no i{color:var(--red)} .tr.wait i{color:var(--amber)} .tr.cc i{color:var(--violet)} .tr.nt i{color:var(--cyan)}
+.tr.ok i{color:var(--green)} .tr.no i{color:var(--red)} .tr.wait i{color:var(--amber)} .tr.cc i{color:var(--violet)} .tr.nt i{color:var(--cyan)} .tr.review i{color:var(--tx2)}
 .tr.now{color:var(--cyan);font-weight:700}
 .tr.stg-h{margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--tx3)}
 
@@ -130,6 +131,8 @@ aside.r{border-left:1px solid var(--line);background:var(--bg2)}
 .opt.wait .s{color:var(--amber)}
 .opt.fs{border-color:#3d2f6b;background:#16122a}.opt.fs:hover{border-color:var(--violet);background:#1d1736}
 .opt.fs .s{color:var(--violet)}
+.opt.review{border-color:var(--line2);background:var(--card2)}.opt.review:hover{border-color:var(--tx2)}
+.opt.review .s{color:var(--tx2)}
 .opt.trade{border-color:#1f5a3a;background:#0f1f17}.opt.trade:hover{border-color:var(--green);background:#11281b}
 .opt.trade .s{color:var(--green)}
 .opt.flash{transform:scale(.99)}
@@ -140,8 +143,6 @@ aside.r{border-left:1px solid var(--line);background:var(--bg2)}
 .ci{display:flex;align-items:center;gap:10px;font-size:16px;padding:6px 0;border-bottom:1px solid #1a2330}
 .ci i{font-style:normal;font-family:var(--mono);font-size:10px;font-weight:700;border-radius:4px;padding:2px 6px;flex:none}
 .ci.ok i{background:var(--green);color:#03200f}
-.ci.open i{background:var(--amber);color:#2a1a02}
-.ci.open{color:var(--amber)}
 
 /* result */
 .res{width:100%;max-width:980px;border-radius:16px;padding:38px 44px 32px;border:1.5px solid;position:relative}
@@ -154,6 +155,7 @@ aside.r{border-left:1px solid var(--line);background:var(--bg2)}
 .res.r-wait{background:var(--amber-d);border-color:var(--amber);color:var(--amber)}
 .res.r-no{background:var(--red-d);border-color:var(--red);color:var(--red)}
 .res.r-fs{background:var(--violet-d);border-color:var(--violet);color:var(--violet)}
+.res.r-review{background:var(--card);border-color:var(--tx2);color:var(--tx2)}
 .res.r-normal{background:var(--blue-d);border-color:var(--blue);color:var(--blue)}
 .res .opts{margin-top:30px}
 .res .opt{color:var(--tx)}
@@ -197,7 +199,7 @@ footer{display:flex;align-items:center;gap:10px;padding:10px 22px;border-top:1px
 .mn .ms{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--tx3);margin:-3px 0 5px}
 .mn .mo{font-family:var(--mono);font-size:10.5px;color:var(--tx2);display:flex;gap:6px;line-height:1.5}
 .mn .mo b{color:var(--tx);font-weight:400;flex:none}
-.mn .mo .no{color:var(--red)} .mn .mo .wait{color:var(--amber)} .mn .mo .fs{color:var(--violet)} .mn .mo .trade{color:var(--green)} .mn .mo .go{color:var(--cyan)}
+.mn .mo .no{color:var(--red)} .mn .mo .wait{color:var(--amber)} .mn .mo .fs{color:var(--violet)} .mn .mo .trade{color:var(--green)} .mn .mo .go{color:var(--cyan)} .mn .mo .review{color:var(--tx2)}
 .rules{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .rule{display:flex;gap:16px;align-items:center;background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:16px 18px;font-size:16px}
 .rule i{font-style:normal;font-family:var(--mono);font-weight:700;padding:6px 10px;border-radius:6px;color:#06100f}
@@ -318,6 +320,7 @@ const FS_STAGES = ['1M TP3','CONDITION NEU','AOI NEU','ER NEU','FS / IFS'];
 const NO   = (gate) => ({type:'NO', gate});
 const WAIT = (wait, recheck) => ({type:'WAIT', wait, recheck});
 const FS   = () => ({type:'FS'});
+const REVIEW = (path) => ({type:'REVIEW', path});   // Pfad im Decision Map nicht eindeutig -> keine Regel erfinden
 const JA = 'JA', NEIN = 'NEIN';
 
 /* ---------- Teil 1/2: Condition -> Trade Type -> Big 1M TP3 Gate (S. 02 / 04 / 06) ---------- */
@@ -340,7 +343,7 @@ function conditionNodes(tf){
       options:[
         {t:'RR', s:'Ranging Range', next:'rr_leg', set:{cond:'RR'}, tr:'Ranging Range'},
         {t:'TR', s:'Trending Range', next:'tr_ext', set:{cond:'TR'}, tr:'Trending Range'},
-        {t:'KEINE', s:'weder RR noch TR', result:NO('Keine Ranging / Trending Range')}]},
+        {t:'NICHT BESTIMMBAR', s:'weder RR noch TR → NO TRADE', result:NO('Keine valide Condition bestimmbar')}]},
     rr_leg:{stage:'CONDITION', q:legPct, sub:'Ranging Range',
       options:[
         {t:JA, next:'big', set:{type:'RANGE'}, tr:legPct.replace('?','')+' → RANGE'},
@@ -445,12 +448,8 @@ const N15 = {
       {t:NEIN, next:'manypb', tr:'PB in OE ≤40%'}]},
   manypb:{stage:'OE / CB', q:'Viele kleine PB?',
     options:[
-      {t:JA, s:'→ Regression → Breakout', next:'regbo', tr:'Viele kleine PB'},
+      {t:JA, s:'→ Regression → Breakout · REGEL PRÜFEN', result:REVIEW('Viele kleine PB → Regression → Breakout'), tr:'Viele kleine PB'},
       {t:NEIN, next:'wick', tr:'Keine vielen kleinen PB'}]},
-  regbo:{stage:'OE / CB', q:'Regression → Breakout?', sub:'Viele kleine PB',
-    options:[
-      {t:JA, next:'wick', tr:'Regression → Breakout'},
-      {t:NEIN, result:WAIT('Viele kleine PB – auf Regression → Breakout warten.')}]},
   wick:{stage:'OE / CB', q:'Wick >30%?', sub:'Candle Behaviour',
     options:[
       {t:JA, result:NO('Wick >30%')},
@@ -467,7 +466,7 @@ const N15 = {
   early:{stage:'TIMING', q:'Early Entry valide?', test:true, sub:'CONF REQ: <b>{conf}</b>',
     info:'Nur perfekt + klare Umkehr; Counter → TP3.',
     options:[
-      {t:JA, s:'→ ENTRY READY (Test)', next:'entry', set:{shift:'Early Entry (TEST)'}, tr:'Early Entry valide (TEST)'},
+      {t:JA, s:'→ Condition Change · HV5 · SL · RR · TP', next:'cc15', set:{shift:'Early Entry (TEST)'}, tr:'Early Entry valide (TEST)'},
       {t:NEIN, s:'→ Geforderte Confirmation', next:'conf_da', tr:'Kein Early Entry'}]},
   conf_da:{stage:'SHIFT', q:'Geforderte Confirmation da?', sub:'CONF REQ: <b>{conf}</b>',
     options:[
@@ -513,16 +512,16 @@ const N30 = {
     info:'Shift bestätigt valide Setups – er rettet kein invalides Setup. NEIN → NO ENTRY → 2. Shift.',
     options:[
       {t:JA, next:'hv5_30', set:{shift:'1. Shift'}, tr:'1. Shift: alles valid'},
-      {t:NEIN, s:'→ NO ENTRY → 2. Shift', result:WAIT('NO ENTRY beim 1. Shift – auf 2. Shift warten.', 'shift2')},
-      {t:'KEIN SHIFT', s:'1. Shift noch nicht da', result:WAIT('Required Confirmation ({conf}) noch nicht da – warten.')}]},
+      {t:NEIN, s:'→ NO ENTRY → 2. Shift', set:{wait2:'Warte auf 2. Shift'}, result:WAIT('NO ENTRY beim 1. Shift – Warte auf 2. Shift', 'shift2')},
+      {t:'KEIN SHIFT', s:'1. Shift noch nicht da', result:WAIT('Warte auf 1. Shift')}]},
   hv5_30:{stage:'SHIFT', q:'HV5 bricht 1. Shift?',
     options:[
-      {t:JA, s:'→ PB → Reaction → 2. Shift', result:WAIT('HV5 bricht 1. Shift – PB → Reaction → 2. Shift / neue 15M abwarten.', 'shift2')},
+      {t:JA, s:'→ PB → Reaction → 2. Shift', set:{wait2:'Warte auf PB + Reaction + 2. Shift / neue 15M'}, result:WAIT('Warte auf PB + Reaction + 2. Shift / neue 15M', 'shift2')},
       {t:NEIN, next:'cc30', set:{shift:'1. Shift hält'}, tr:'HV5 ok → Shift valid / hält'}]},
   shift2:{stage:'SHIFT', q:'Nach 2. Shift: Shift valid / hält?', sub:'2. Shift / neue 15M',
     options:[
       {t:JA, next:'cc30', set:{shift:'2. Shift hält'}, tr:'2. Shift valid / hält'},
-      {t:NEIN, result:WAIT('2. Shift noch nicht valid / hält nicht – warten.', 'shift2')}]},
+      {t:NEIN, result:WAIT('{wait2}', 'shift2')}]},
   cc30:{stage:'SHIFT', q:'Condition Change?',
     options:[
       {t:JA, result:FS(), tr:'Condition Change'},
@@ -570,7 +569,7 @@ const FINAL = {
     {l:'AOI / ER', n:['pro_er','range_er','cnt_ext']},
     {l:'OE + CB', n:['oe30']},
     {l:'Timing', n:['t15']},
-    {l:'Required Shift', n:['conf_da']},
+    {l:'Required Shift', n:['conf_da','early']},
     {l:'No Condition Change', n:['cc15']},
     {l:'No Chase / HV5', n:['hv5']},
     {l:'External SL', n:['sl']},
@@ -689,6 +688,7 @@ function choose(i){
     if(r.wait) r.wait = fill(r.wait, S.state);
     if(r.type==='NO') S.trace.push({x:r.gate, k:'no', st:n.stage});
     if(r.type==='WAIT') S.trace.push({x:'WAIT: '+r.wait, k:'wait', st:n.stage});
+    if(r.type==='REVIEW') S.trace.push({x:'REGEL PRÜFEN: '+r.path, k:'review', st:n.stage});
     S.result = r;
   } else if(o.next){
     goNode(o.next);
@@ -757,14 +757,14 @@ function optionsFor(n){
 function optClass(o){
   if(o.cls) return o.cls;
   if(o.result){
-    return {NO:'no', WAIT:'wait', FS:'fs', TRADE:'trade', NORMAL:'go'}[o.result.type] || 'go';
+    return {NO:'no', WAIT:'wait', FS:'fs', TRADE:'trade', NORMAL:'go', REVIEW:'review'}[o.result.type] || 'go';
   }
   return 'go';
 }
 function optSub(o){
   if(o.s) return o.s;
   if(o.result){
-    return {NO:'→ NO TRADE', WAIT:'→ WAIT', FS:'→ STOP · FS / IFS', TRADE:'→ TRADE', NORMAL:'→ NORMALER CBR'}[o.result.type];
+    return {NO:'→ NO TRADE', WAIT:'→ WAIT', FS:'→ STOP · FS / IFS', TRADE:'→ TRADE', NORMAL:'→ NORMALER CBR', REVIEW:'→ REGEL PRÜFEN'}[o.result.type];
   }
   return '→ weiter';
 }
@@ -774,6 +774,7 @@ function resultOptions(){
   const bk = {t:'ZURÜCK', s:'letzte Entscheidung ändern', cls:'go', action:back};
   if(r.type==='WAIT') return [{t:'ERNEUT PRÜFEN', s:'→ '+fill(T().nodes[r.recheck||r.from].q, S.state), cls:'wait', action:recheck}, bk, nt];
   if(r.type==='NO') return [nt, bk];
+  if(r.type==='REVIEW') return [{t:'ZURÜCK', s:'letzte Entscheidung ändern', cls:'go', action:back}, {t:'TRADE ABBRECHEN', s:'Reset · gleicher Timeframe', cls:'no', action:resetTrade}];
   if(r.type==='TRADE') return [nt, bk];
   if(r.type==='FS') return [
     {t:'FS STARTEN', s:'Shift-Richtung', cls:'fs', action:()=>startFS('FS')},
@@ -803,7 +804,7 @@ function curStage(){
 }
 function resCls(){
   if(!S.result) return '';
-  return {NO:'r-no', WAIT:'r-wait', FS:'r-fs', TRADE:'r-trade', NORMAL:'', PLAN:'r-fs'}[S.result.type]||'';
+  return {NO:'r-no', WAIT:'r-wait', FS:'r-fs', TRADE:'r-trade', NORMAL:'', PLAN:'r-fs', REVIEW:'r-review'}[S.result.type]||'';
 }
 
 function render(){
@@ -835,7 +836,7 @@ function render(){
   let lastSt = null, th = '';
   S.trace.forEach(t => {
     if(t.st && t.st!==lastSt){ th += `<div class="tr stg-h">${esc(t.st)}</div>`; lastSt = t.st; }
-    const ic = {ok:'✓', no:'✕', wait:'◷', cc:'◆', nt:'→'}[t.k] || '✓';
+    const ic = {ok:'✓', no:'✕', wait:'◷', cc:'◆', nt:'→', review:'?'}[t.k] || '✓';
     th += `<div class="tr ${t.k}"><i>${ic}</i><span>${esc(t.x)}</span></div>`;
   });
   if(!S.result){ const n = tree.nodes[S.node]; th += `<div class="tr now"><i>→</i><span>${esc(fill(n.q, st).replace(/<[^>]+>/g,''))}</span></div>`; }
@@ -868,13 +869,9 @@ function renderNode(){
   if(n.info && infoOpen) h += `<div class="info">${esc(n.info)}</div>`;
   if(n.kind==='final'){
     const items = FINAL[S.tree];
-    const visited = new Set(S.hist.map(x => x.node));
-    h += `<div class="lbl" style="margin-top:20px">${S.tree} FINAL GATE</div><div class="chk">` + items.map(it => {
-      const ok = it.n.some(id => visited.has(id));
-      return `<div class="ci ${ok?'ok':'open'}"><i>${ok?'OK':'PRÜFEN'}</i>${esc(it.l)}</div>`;
-    }).join('') + `</div>`;
-    const open = items.filter(it => !it.n.some(id => visited.has(id))).length;
-    if(open) h += `<div class="ctx" style="color:var(--amber)">${open} Gate(s) im Pfad nicht abgefragt – vor TRADE manuell prüfen.</div>`;
+    // Jedes Pflicht-Gate wird im aktiven Pfad abgefragt (siehe Pfadtests) -> hier nur Bestätigung
+    h += `<div class="lbl" style="margin-top:20px">${S.tree} FINAL GATE</div><div class="chk">` + items.map(it =>
+      `<div class="ci ok"><i>OK</i>${esc(it.l)}</div>`).join('') + `</div>`;
   }
   const opts = optionsFor(n);
   h += optsHtml(opts, n.kind==='failsel');
@@ -900,6 +897,10 @@ function renderResult(){
     h = `<div class="res r-fs"><div class="lbl">BIG EXTERNAL 1M TP3 + CONDITION CHANGE</div><div class="big">FS / IFS</div>
       <div class="why"><div class="v">ALTER CBR BEENDET</div></div>
       <div class="flow">Condition neu → AOI neu → ER neu → FS / IFS</div>`;
+  } else if(r.type==='REVIEW'){
+    h = `<div class="res r-review"><div class="lbl">REVIEW_REQUIRED · ${esc(r.stage||'')}</div><div class="big">REGEL PRÜFEN</div>
+      <div class="why"><div class="v">Dieser Pfad ist im aktuellen Decision Map nicht eindeutig definiert.</div></div>
+      <div class="meta">Pfad: ${esc(r.path)}</div>`;
   } else if(r.type==='NORMAL'){
     h = `<div class="res r-normal"><div class="lbl">KEIN CONDITION CHANGE</div><div class="big">NORMALER CBR</div>
       <div class="flow">Weiter im normalen CBR – Timeframe wählen.</div>`;
@@ -939,7 +940,7 @@ function toggleInfo(){
 
 /* ---------- MAP ---------- */
 function targetLabel(o){
-  if(o.result){ const r=o.result; return {cls:optClass(o), txt: r.type==='NO'?'NO TRADE':r.type==='WAIT'?'WAIT':r.type==='FS'?'FS / IFS':r.type==='TRADE'?'TRADE':'NORMALER CBR'}; }
+  if(o.result){ const r=o.result; return {cls:optClass(o), txt: r.type==='NO'?'NO TRADE':r.type==='WAIT'?'WAIT':r.type==='FS'?'FS / IFS':r.type==='TRADE'?'TRADE':r.type==='REVIEW'?'REGEL PRÜFEN':'NORMALER CBR'}; }
   if(o.next){
     const tn = T().nodes[o.next];
     if(tn && tn.route) return {cls:'go', txt: o.next==='aoi' ? '→ AOI / ER nach Trade Type' : '→ FS / IFS Plan'};
