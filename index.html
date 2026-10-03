@@ -5,264 +5,356 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CBR Live Execution</title>
 <style>
+/* =====================================================================
+   CBR TRADING PLAYBOOK · EDITION 2026 — DESIGN SYSTEM (Live Execution)
+   Quelle: CBR_Trading_Playbook.pdf (Cover, Core Model, Setup-Regeln,
+   No Trade, Pre-Trade Checklist, Visual Reference)
+   ===================================================================== */
 :root{
-  --bg:#07090d; --bg2:#0b0f15; --panel:#0f141c; --card:#131a24; --card2:#18212d;
-  --line:#1f2935; --line2:#2a3646;
-  --tx:#e8edf3; --tx2:#9aa7b6; --tx3:#5f6c7b;
-  --cyan:#45d6d2; --cyan-d:#0f2a2c;
-  --blue:#4a9eff; --blue-d:#0f1d30;
-  --green:#2fd27a; --green-d:#0f2419;
-  --amber:#ffb340; --amber-d:#2b2112;
-  --test:#ffd166;
-  --red:#ff5a6e; --red-d:#2c1218;
-  --violet:#9b7bff; --violet-d:#1c1631;
-  --sans:"Bahnschrift","DIN Alternate","Roboto Condensed","Arial Narrow","Segoe UI",system-ui,sans-serif;
-  --mono:"JetBrains Mono","DejaVu Sans Mono","Cascadia Mono",Consolas,ui-monospace,monospace;
+  /* surfaces */
+  --bg:#0b0d12;          /* Seitenhintergrund */
+  --surface:#14171e;     /* Module / Cards */
+  --surface2:#1c2029;    /* gehobene Fläche, Hover */
+  --line:#262b36;        /* feine Borders / Dividers */
+  --line2:#333a47;       /* stärkere Border */
+  /* text */
+  --tx:#ffffff;
+  --tx2:#a6aebf;
+  --tx3:#848b99;
+  --tx4:#5d626e;
+  --tx5:#3b3f48;
+  /* brand */
+  --purple:#a855f7;      /* CBR Brand / Key Rule / aktiv */
+  --purple-l:#c084fc;
+  --purple-b:#60348e;    /* Purple Border */
+  --purple-s:#181325;    /* Purple Box Fläche */
+  /* semantics */
+  --green:#22c55e;  --green-b:#1f7a4c; --green-s:#0c1714;
+  --red:#ff4b5c;    --red-l:#ff7683;   --red-b:#62232c;  --red-s:#1e1117;
+  --amber:#f5a524;  --amber-b:#8a6116; --amber-s:#17140f;
+  /* type */
+  --sans:"Inter","Inter Display","Segoe UI","Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+  --mono:"JetBrains Mono","JetBrainsMono","Cascadia Mono","SF Mono",Consolas,"DejaVu Sans Mono",ui-monospace,monospace;
+  /* scale */
+  --r:6px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:15px;line-height:1.35;-webkit-font-smoothing:antialiased;overflow:hidden}
-button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-.mono{font-family:var(--mono)}
-.lbl{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx3)}
+body{background:var(--bg);color:var(--tx);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;text-align:left}
 .hidden{display:none!important}
 
-/* ---------- START ---------- */
-#start{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;padding:32px 16px;
-  background:radial-gradient(1200px 600px at 50% 0%,#0e1a22 0%,var(--bg) 60%)}
-.brand{text-align:center}
-.brand .bar{width:56px;height:4px;background:var(--cyan);border-radius:2px;margin:0 auto 18px}
-.brand h1{font-size:64px;letter-spacing:.06em;font-weight:700;line-height:1}
-.brand h2{font-size:22px;letter-spacing:.42em;font-weight:500;color:var(--cyan);margin-top:10px;padding-left:.42em}
-.brand p{margin-top:14px}
-.tfgrid{display:grid;grid-template-columns:repeat(3,minmax(0,280px));gap:22px;width:100%;justify-content:center}
-.tfcard{position:relative;background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:34px 28px 26px;text-align:left;transition:border-color .08s,background .08s}
-.tfcard:hover,.tfcard:focus-visible{border-color:var(--cyan);background:#15202b;outline:none}
-.tfcard .k{position:absolute;top:14px;right:16px}
-.tfcard .tf{font-size:72px;font-weight:700;letter-spacing:.02em;line-height:1;color:var(--tx)}
-.tfcard .d{margin-top:16px;color:var(--tx2);font-size:13px;font-family:var(--mono);letter-spacing:.04em}
-.tfcard::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:0 0 14px 14px;background:var(--cyan)}
-.fscard{display:flex;align-items:center;gap:16px;background:var(--violet-d);border:1px solid #3d2f6b;border-radius:12px;padding:14px 22px;color:var(--tx)}
-.fscard:hover,.fscard:focus-visible{border-color:var(--violet);outline:none}
-.fscard b{font-size:20px;letter-spacing:.08em;color:var(--violet)}
-.fscard span{color:var(--tx2);font-size:13px}
-.principles{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;max-width:1100px}
-.pr{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--tx2);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px}
-.pr i{font-style:normal;font-family:var(--mono);font-size:11px;font-weight:700;color:#06100f;border-radius:4px;padding:2px 6px}
-.resume{color:var(--tx2);font-size:13px;border:1px dashed var(--line2);padding:8px 14px;border-radius:8px}
-.resume:hover{border-color:var(--cyan);color:var(--tx)}
+/* ---- Playbook primitives ---- */
+.over{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.32em;text-transform:uppercase;color:var(--purple)}
+.over.g{color:var(--green)} .over.r{color:var(--red-l)} .over.a{color:var(--amber)} .over.n{color:var(--tx3)}
+.lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx3)}
+.sq{display:inline-block;width:9px;height:9px;background:var(--purple);flex:none}
+.sq.g{background:var(--green)} .sq.r{background:var(--red)} .sq.a{background:var(--amber)} .sq.n{background:var(--tx4)}
+.rule{height:1px;background:var(--line);border:0}
+.tag{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.2em;padding:3px 8px;border-radius:3px;border:1px solid}
+.tag.test{color:var(--amber);border-color:var(--amber-b);background:var(--amber-s)}
+.light{font-weight:300;color:var(--tx2)}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:var(--s4) var(--s5)}
+.box.key{background:var(--purple-s);border-color:var(--purple-b);box-shadow:inset 3px 0 0 var(--purple)}
+.box.valid{background:var(--green-s);border-color:var(--green-b)}
+.box.no{background:var(--red-s);border-color:var(--red-b);box-shadow:inset 3px 0 0 var(--red)}
+.box.test{background:var(--amber-s);border-color:var(--amber-b)}
+.box .over{display:block;margin-bottom:var(--s2);font-size:10px}
 
-/* ---------- APP ---------- */
+/* ===================== START (Cover) ===================== */
+#start{height:100%;overflow:auto;position:relative}
+#start::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#a855f7,#ec4899,#fb923c)}
+.cover{max-width:1180px;margin:0 auto;padding:72px 48px 32px;min-height:100%;display:flex;flex-direction:column}
+.cover h1{font-size:92px;font-weight:900;letter-spacing:-.025em;line-height:.98;margin-top:var(--s6)}
+.cover h1 span{display:block;color:var(--purple-l)}
+.cover .subt{font-size:20px;font-weight:300;color:var(--tx2);margin-top:var(--s5)}
+.cover .subm{margin-top:var(--s2)}
+.quote{margin-top:var(--s6);padding-left:var(--s5);border-left:3px solid var(--purple);max-width:560px}
+.quote q{display:block;font-size:22px;font-weight:300;line-height:1.3;quotes:"„" "“"}
+.quote small{display:block;margin-top:var(--s2);font-size:12px;color:var(--tx3)}
+.sect{display:flex;align-items:center;gap:var(--s3);margin-top:auto;padding-top:var(--s7)}
+.sect .rule{flex:1}
+.tfgrid{display:grid;grid-template-columns:repeat(3,1fr);margin-top:var(--s4);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.tfcard{position:relative;padding:var(--s5) var(--s5) var(--s5);border-right:1px solid var(--line);transition:background .08s}
+.tfcard:last-child{border-right:0}
+.tfcard::before{content:"";position:absolute;left:0;right:0;top:-1px;height:2px;background:transparent}
+.tfcard:hover,.tfcard:focus-visible{background:var(--surface);outline:none}
+.tfcard:hover::before,.tfcard:focus-visible::before{background:var(--purple)}
+.tfcard .num{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--purple)}
+.tfcard .tf{display:block;font-size:68px;font-weight:900;letter-spacing:-.02em;line-height:1;margin-top:var(--s3)}
+.tfcard .d{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--tx3);margin-top:var(--s4)}
+.tfcard .key{position:absolute;right:var(--s5);top:var(--s5);font-family:var(--mono);font-size:10px;color:var(--tx4);letter-spacing:.14em}
+.fscard{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:var(--s5);margin-top:var(--s4);padding:var(--s4) var(--s5);background:var(--purple-s);border:1px solid var(--purple-b);border-radius:var(--r)}
+.fscard:hover,.fscard:focus-visible{border-color:var(--purple);outline:none}
+.fscard b{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.fscard .d{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--tx2);text-transform:uppercase}
+.resume{margin-top:var(--s4);font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--tx2);padding:var(--s2) 0;border-bottom:1px solid var(--line2);align-self:flex-start}
+.resume:hover{color:var(--tx);border-color:var(--purple)}
+.principles{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s5);margin-top:var(--s6);padding-top:var(--s4);border-top:1px solid var(--line)}
+.pr{display:flex;gap:var(--s3);align-items:flex-start;font-size:13px;color:var(--tx2);line-height:1.45}
+.pr .n{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--purple);padding-top:2px;flex:none}
+.cfoot{display:flex;justify-content:space-between;margin-top:var(--s6);padding-top:var(--s3);border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--tx4);text-transform:uppercase}
+
+/* ===================== APP ===================== */
 #app{height:100%;display:grid;grid-template-rows:auto auto 1fr auto}
-header{display:flex;align-items:center;gap:20px;padding:12px 22px;border-bottom:1px solid var(--line);background:var(--bg2)}
-.hbrand{display:flex;align-items:center;gap:12px}
-.hbrand .bar{width:4px;height:30px;background:var(--cyan);border-radius:2px}
-.hbrand b{font-size:18px;letter-spacing:.08em}
-.hbrand small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--tx3)}
-.tfpill{font-family:var(--mono);font-weight:700;font-size:15px;background:var(--cyan);color:#05201f;border-radius:999px;padding:6px 16px;letter-spacing:.06em}
-.tfpill.fs{background:var(--violet);color:#120a2a}
-.hstate{display:flex;gap:22px;flex:1;min-width:0;overflow:hidden}
-.hs{min-width:0}
-.hs .v{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--tx);white-space:nowrap}
-.hact{display:flex;gap:8px}
-.hbtn{font-family:var(--mono);font-size:11px;letter-spacing:.14em;border:1px solid var(--line2);border-radius:7px;padding:8px 12px;color:var(--tx2);background:var(--panel)}
-.hbtn:hover{border-color:var(--cyan);color:var(--tx)}
-.hbtn kbd,.fbtn kbd{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-left:6px}
+header{display:flex;align-items:center;gap:var(--s6);padding:18px 40px 14px}
+.hbrand{display:flex;align-items:center;gap:var(--s3)}
+.hbrand .bar{width:3px;height:30px;background:var(--purple)}
+.hbrand b{display:block;font-size:15px;font-weight:800;letter-spacing:.04em}
+.hbrand small{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.28em;color:var(--tx3)}
+.tfpill{font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.14em;color:var(--purple-l);border:1px solid var(--purple-b);background:var(--purple-s);border-radius:3px;padding:5px 10px}
+.hstate{display:flex;gap:var(--s6);flex:1;min-width:0;overflow:hidden}
+.hs .lbl{font-size:9.5px}
+.hs .v{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--tx);white-space:nowrap;margin-top:2px}
+.hact{display:flex;gap:var(--s5)}
+.hbtn{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;color:var(--tx3);padding:4px 0;border-bottom:1px solid transparent}
+.hbtn:hover{color:var(--tx);border-bottom-color:var(--purple)}
+.hbtn kbd,.fbtn kbd{font-family:var(--mono);font-size:9.5px;color:var(--tx4);margin-left:6px;letter-spacing:0}
 
-.progress{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;padding:10px 22px;border-bottom:1px solid var(--line)}
-.stg{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-align:center;padding:8px 4px;border-radius:7px;background:var(--card);color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.stg.done{color:var(--tx2);background:#101820;box-shadow:inset 0 -2px 0 #24575a}
-.stg.cur{background:var(--cyan);color:#05201f;font-weight:700}
-.stg.cur.r-no{background:var(--red);color:#2a0710}
-.stg.cur.r-wait{background:var(--amber);color:#2a1a02}
-.stg.cur.r-fs{background:var(--violet);color:#120a2a}
-.stg.cur.r-review{background:var(--tx2);color:var(--bg)}
-.stg.cur.r-trade{background:var(--green);color:#03200f}
+/* progress — Core-Model-Sequenz */
+.progress{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 4px;padding:12px 40px 16px;border-bottom:1px solid var(--line);margin:0 0}
+.stg{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--tx5);padding:7px 11px;border:1px solid transparent;border-radius:3px;white-space:nowrap}
+.stg i{width:6px;height:6px;background:var(--tx5);flex:none}
+.stg.done{color:var(--tx2)} .stg.done i{background:var(--green)}
+.stg.cur{color:var(--purple-l);border-color:var(--purple-b);background:var(--purple-s);font-weight:700} .stg.cur i{background:var(--purple)}
+.stg.cur.r-no{color:var(--red-l);border-color:var(--red-b);background:var(--red-s)} .stg.cur.r-no i{background:var(--red)}
+.stg.cur.r-wait,.stg.cur.r-review{color:var(--amber);border-color:var(--amber-b);background:var(--amber-s)} .stg.cur.r-wait i,.stg.cur.r-review i{background:var(--amber)}
+.stg.cur.r-trade{color:var(--green);border-color:var(--green-b);background:var(--green-s)} .stg.cur.r-trade i{background:var(--green)}
+.sep{color:var(--tx5);font-family:var(--mono);font-size:12px;padding:0 2px}
+.sep.done{color:var(--purple-b)}
 
-main{display:grid;grid-template-columns:260px minmax(0,1fr) 300px;min-height:0}
-aside{padding:18px 18px;overflow:auto;min-height:0}
-aside.l{border-right:1px solid var(--line);background:var(--bg2)}
-aside.r{border-left:1px solid var(--line);background:var(--bg2)}
-.sgrid{display:grid;gap:2px;margin-top:10px}
-.srow{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #141b25;font-size:13px}
-.srow span{color:var(--tx3);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding-top:1px}
-.srow b{font-family:var(--mono);font-size:12.5px;text-align:right;color:var(--tx)}
-.srow b.na{color:#323d4a;font-weight:400}
-.srow b.ok{color:var(--green)} .srow b.cy{color:var(--cyan)} .srow b.am{color:var(--amber)} .srow b.vi{color:var(--violet)}
-.trace{margin-top:10px;display:flex;flex-direction:column;gap:3px;font-size:12.5px}
-.tr{display:flex;gap:8px;align-items:baseline;color:var(--tx2)}
-.tr i{font-style:normal;font-family:var(--mono);font-size:11px;width:12px;flex:none}
-.tr.ok i{color:var(--green)} .tr.no i{color:var(--red)} .tr.wait i{color:var(--amber)} .tr.cc i{color:var(--violet)} .tr.nt i{color:var(--cyan)} .tr.review i{color:var(--tx2)}
-.tr.now{color:var(--cyan);font-weight:700}
-.tr.stg-h{margin-top:6px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--tx3)}
+main{display:grid;grid-template-columns:270px minmax(0,1fr) 290px;min-height:0}
+aside{padding:28px 32px 24px 40px;overflow:auto;min-height:0}
+aside.r{padding:28px 40px 24px 32px}
+aside .over{display:block;padding-bottom:10px;border-bottom:1px solid var(--line2);font-size:10px}
+.sgrid{display:flex;flex-direction:column}
+.srow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.srow span{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx4)}
+.srow b{font-family:var(--mono);font-size:12px;font-weight:600;text-align:right;color:var(--tx)}
+.srow b.na{color:var(--tx5);font-weight:400}
+.srow b.ok{color:var(--green)} .srow b.cy{color:var(--purple-l)} .srow b.am{color:var(--amber)} .srow b.vi{color:var(--purple-l)}
+.trace{display:flex;flex-direction:column}
+.tr{display:grid;grid-template-columns:26px 1fr;gap:6px;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--tx2);line-height:1.35}
+.tr i{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--tx4);padding-top:1px}
+.tr.ok i{color:var(--green)} .tr.no i{color:var(--red)} .tr.wait i,.tr.review i{color:var(--amber)} .tr.cc i{color:var(--purple-l)} .tr.nt i{color:var(--tx3)}
+.tr.no span{color:var(--red-l)} .tr.wait span,.tr.review span{color:var(--amber)} .tr.cc span{color:var(--purple-l)}
+.tr.now{border-bottom:0} .tr.now i{color:var(--purple)} .tr.now span{color:var(--tx);font-weight:700}
+.tr.empty{grid-template-columns:1fr;color:var(--tx4);font-family:var(--mono);font-size:10.5px;letter-spacing:.14em}
 
-.center{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 28px;min-height:0;overflow:auto}
-.qcard{width:100%;max-width:980px;background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:34px 40px 30px;position:relative}
-.qcard::before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:0 3px 3px 0;background:var(--accent,var(--cyan))}
-.qhead{display:flex;align-items:center;gap:10px;margin-bottom:18px}
-.qhead .lbl{color:var(--accent,var(--cyan));font-weight:700}
-.tag{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;padding:3px 8px;border-radius:999px}
-.tag.test{background:var(--test);color:#2a1e00}
-.tag.fsx{background:var(--violet);color:#120a2a}
-.ibtn{margin-left:auto;width:30px;height:30px;border-radius:50%;border:1px solid var(--line2);font-family:var(--mono);font-weight:700;color:var(--tx2);font-size:14px}
-.ibtn:hover,.ibtn.on{border-color:var(--cyan);color:var(--cyan)}
-.q{font-size:44px;font-weight:700;line-height:1.12;letter-spacing:.01em}
-.qsub{margin-top:12px;font-family:var(--mono);font-size:14px;color:var(--tx2);letter-spacing:.03em}
-.qsub b{color:var(--cyan)}
-.info{margin-top:16px;background:var(--panel);border:1px solid var(--line2);border-left:3px solid var(--blue);border-radius:8px;padding:12px 14px;font-size:14px;color:var(--tx2)}
-.opts{display:grid;gap:14px;margin-top:30px}
+/* center — Playbook-Regelseite */
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 40px;min-height:0;overflow:auto}
+.qcard,.res,.banner{width:100%;max-width:1000px}
+.qcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:36px 44px 34px;position:relative}
+.qcard::before{content:"";position:absolute;left:-1px;top:-1px;width:56px;height:2px;background:var(--purple)}
+.qhead{display:flex;align-items:center;gap:var(--s3)}
+.qhead .sq{width:8px;height:8px}
+.ibtn{margin-left:auto;width:28px;height:28px;border-radius:3px;border:1px solid var(--line2);font-family:var(--mono);font-weight:700;color:var(--tx3);font-size:13px;text-align:center}
+.ibtn:hover,.ibtn.on{border-color:var(--purple);color:var(--purple-l)}
+.q{font-size:58px;font-weight:900;line-height:1.04;letter-spacing:-.02em;text-transform:uppercase;margin-top:22px}
+.chap{margin-top:14px;font-size:15px;font-weight:700;letter-spacing:.01em;text-transform:uppercase;color:var(--tx3)}
+.chap .light{color:var(--tx4)}
+.qsub{margin-top:6px;font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--tx2)}
+.qsub b{color:var(--purple-l)}
+.info{margin-top:var(--s5);font-size:14px;color:var(--tx2)}
+.info b{display:block;font-size:15px;color:var(--tx);margin-bottom:2px;font-weight:600}
+.opts{display:grid;gap:12px;margin-top:30px}
 .opts.n1{grid-template-columns:1fr}
 .opts.n2{grid-template-columns:1fr 1fr}
 .opts.n3{grid-template-columns:repeat(3,1fr)}
 .opts.n4{grid-template-columns:repeat(2,1fr)}
-.opts.list{grid-template-columns:repeat(3,1fr);gap:10px}
-.opt{position:relative;text-align:left;border-radius:12px;padding:20px 22px 18px;border:1.5px solid var(--line2);background:var(--card2);min-height:104px;display:flex;flex-direction:column;justify-content:space-between;transition:border-color .06s,background .06s}
-.opts.list .opt{min-height:70px;padding:14px 16px}
-.opt .k{position:absolute;top:12px;right:14px;font-family:var(--mono);font-size:12px;color:var(--tx3);border:1px solid var(--line2);border-radius:5px;padding:1px 7px}
-.opt .t{font-size:30px;font-weight:700;letter-spacing:.03em;padding-right:34px}
-.opts.list .opt .t{font-size:17px}
-.opt .s{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--tx2);margin-top:8px}
-.opt:hover,.opt:focus-visible{outline:none}
-.opt.go{border-color:#245c5a}.opt.go:hover{border-color:var(--cyan);background:#12262a}
-.opt.go .s{color:var(--cyan)}
-.opt.no{border-color:#5a2632;background:#1a1218}.opt.no:hover{border-color:var(--red);background:#24131a}
-.opt.no .s{color:var(--red)}
-.opt.wait{border-color:#5a4520;background:#1a1610}.opt.wait:hover{border-color:var(--amber);background:#241c10}
-.opt.wait .s{color:var(--amber)}
-.opt.fs{border-color:#3d2f6b;background:#16122a}.opt.fs:hover{border-color:var(--violet);background:#1d1736}
-.opt.fs .s{color:var(--violet)}
-.opt.review{border-color:var(--line2);background:var(--card2)}.opt.review:hover{border-color:var(--tx2)}
-.opt.review .s{color:var(--tx2)}
-.opt.trade{border-color:#1f5a3a;background:#0f1f17}.opt.trade:hover{border-color:var(--green);background:#11281b}
-.opt.trade .s{color:var(--green)}
-.opt.flash{transform:scale(.99)}
-.ctx{margin-top:18px;font-size:13px;color:var(--tx3);font-family:var(--mono)}
+.opts.list{grid-template-columns:repeat(3,1fr);gap:8px}
+.opt{position:relative;border-radius:var(--r);padding:16px 20px 16px;border:1px solid var(--line2);background:var(--bg);min-height:112px;display:flex;flex-direction:column;justify-content:space-between;gap:8px;transition:border-color .06s,background .06s}
+.opts.list .opt{min-height:66px;padding:11px 14px;gap:4px}
+.opt .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;color:var(--tx4)}
+.opt .k::after{content:"";position:absolute;right:16px;top:18px;width:8px;height:8px;background:var(--tx5)}
+.opt .t{font-size:32px;font-weight:800;letter-spacing:-.01em;line-height:1.05}
+.opts.list .opt .t{font-size:15px;font-weight:700}
+.opts.list .opt .k::after{top:13px;right:12px}
+.opt .s{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3)}
+.opt:hover,.opt:focus-visible{outline:none;background:var(--surface2)}
+.opt.go:hover{border-color:var(--purple)} .opt.go:hover .k::after{background:var(--purple)}
+.opt.no{border-color:var(--red-b)} .opt.no .s{color:var(--red-l)} .opt.no .k::after{background:var(--red)} .opt.no:hover{border-color:var(--red)}
+.opt.wait,.opt.review{border-color:var(--amber-b)} .opt.wait .s,.opt.review .s{color:var(--amber)} .opt.wait .k::after,.opt.review .k::after{background:var(--amber)} .opt.wait:hover,.opt.review:hover{border-color:var(--amber)}
+.opt.fs{border-color:var(--purple-b)} .opt.fs .s{color:var(--purple-l)} .opt.fs .k::after{background:var(--purple)} .opt.fs:hover{border-color:var(--purple)}
+.opt.trade{border-color:var(--green-b)} .opt.trade .s{color:var(--green)} .opt.trade .k::after{background:var(--green)} .opt.trade:hover{border-color:var(--green)}
+.opt.flash{background:var(--surface2)}
 
-/* checklist */
-.chk{display:grid;grid-template-columns:1fr 1fr;gap:6px 26px;margin-top:22px}
-.ci{display:flex;align-items:center;gap:10px;font-size:16px;padding:6px 0;border-bottom:1px solid #1a2330}
-.ci i{font-style:normal;font-family:var(--mono);font-size:10px;font-weight:700;border-radius:4px;padding:2px 6px;flex:none}
-.ci.ok i{background:var(--green);color:#03200f}
+/* Final Gate — Pre-Trade-Checklist */
+.chkhead{display:flex;align-items:center;gap:var(--s3);margin-top:26px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
+.chk{display:grid;grid-template-columns:1fr 1fr;column-gap:36px}
+.ci{display:flex;align-items:center;gap:12px;font-size:15px;padding:8px 0;border-bottom:1px solid var(--line);color:var(--tx)}
+.ci i{font-style:normal;width:14px;height:14px;border:1px solid var(--green-b);background:var(--green-s);color:var(--green);font-size:10px;line-height:12px;text-align:center;flex:none;font-weight:700}
 
-/* result */
-.res{width:100%;max-width:980px;border-radius:16px;padding:38px 44px 32px;border:1.5px solid;position:relative}
-.res .big{font-size:84px;font-weight:700;letter-spacing:.04em;line-height:1}
-.res .why{margin-top:22px}
-.res .why .lbl{color:inherit;opacity:.8}
-.res .why .v{font-size:30px;font-weight:700;margin-top:6px;color:var(--tx)}
-.res .meta{margin-top:12px;font-family:var(--mono);font-size:13px;color:var(--tx2)}
-.res.r-trade{background:var(--green-d);border-color:var(--green);color:var(--green)}
-.res.r-wait{background:var(--amber-d);border-color:var(--amber);color:var(--amber)}
-.res.r-no{background:var(--red-d);border-color:var(--red);color:var(--red)}
-.res.r-fs{background:var(--violet-d);border-color:var(--violet);color:var(--violet)}
-.res.r-review{background:var(--card);border-color:var(--tx2);color:var(--tx2)}
-.res.r-normal{background:var(--blue-d);border-color:var(--blue);color:var(--blue)}
+/* Result — Statement Boxes */
+.res{border-radius:var(--r);padding:38px 44px 34px;border:1px solid var(--line);background:var(--surface);position:relative}
+.res::before{content:"";position:absolute;left:-1px;top:-1px;bottom:-1px;width:3px;border-radius:var(--r) 0 0 var(--r);background:var(--tx4)}
+.res .big{font-size:96px;font-weight:900;letter-spacing:-.03em;line-height:.95;margin-top:18px;text-transform:uppercase}
+.res .big .light{font-weight:300;color:var(--tx2)}
+.res .why{margin-top:26px;padding-top:16px;border-top:1px solid var(--line)}
+.res .why .v{font-size:28px;font-weight:800;margin-top:8px;color:var(--tx);line-height:1.2}
+.res .meta{margin-top:10px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--tx3);text-transform:uppercase}
+.res.r-trade{border-color:var(--green-b)} .res.r-trade::before{background:var(--green)}
+.res.r-wait,.res.r-review{border-color:var(--amber-b);background:var(--amber-s)} .res.r-wait::before,.res.r-review::before{background:var(--amber)}
+.res.r-no{border-color:var(--red-b);background:var(--red-s)} .res.r-no::before{background:var(--red)}
+.res.r-fs{border-color:var(--purple-b);background:var(--purple-s)} .res.r-fs::before{background:var(--purple)}
+.res.r-trade .big .c{color:var(--tx)} .res.r-no .big .c{color:var(--red)} .res.r-wait .big .c,.res.r-review .big .c{color:var(--amber)} .res.r-fs .big .c{color:var(--purple-l)}
 .res .opts{margin-top:30px}
-.res .opt{color:var(--tx)}
-.res .sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 18px;margin-top:22px}
-.res .sum div{border-top:1px solid rgba(255,255,255,.08);padding-top:6px}
-.res .sum span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--tx3);text-transform:uppercase}
-.res .sum b{font-family:var(--mono);font-size:14px;color:var(--tx)}
-.res .flow{margin-top:14px;font-family:var(--mono);font-size:14px;color:var(--tx2);letter-spacing:.04em}
-.plan{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
-.plan div{background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.07);border-radius:9px;padding:10px 14px}
-.plan span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--tx3);text-transform:uppercase}
-.plan b{font-size:18px;color:var(--tx)}
-.plan .opt-note{grid-column:1/-1;border-color:#5a4a20}
-.plan .opt-note b{color:var(--test)}
+.res .opt{background:var(--bg)}
+.core{display:grid;grid-template-columns:repeat(3,1fr);margin-top:24px;border-top:1px solid var(--line)}
+.core div{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;font-weight:800;letter-spacing:.02em}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);column-gap:28px;margin-top:16px}
+.sum div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)}
+.sum span{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;color:var(--tx4);text-transform:uppercase}
+.sum b{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--tx);text-align:right}
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:20px;padding:12px 16px;border:1px solid var(--line2);border-radius:var(--r);font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--tx)}
+.chain i{font-style:normal;color:var(--purple)}
+.plan{margin-top:22px;border-top:1px solid var(--line2)}
+.plan div{display:grid;grid-template-columns:180px 1fr;padding:9px 0;border-bottom:1px solid var(--line)}
+.plan span{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--tx3);text-transform:uppercase;padding-top:3px}
+.plan b{font-size:16px;font-weight:700;color:var(--tx)}
+.res .box.test{margin-top:14px}
+.res .box.test b{display:block;font-size:15px}
 
-.banner{width:100%;max-width:980px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;background:var(--violet-d);border:1px solid var(--violet);border-radius:10px;padding:10px 16px}
-.banner b{font-family:var(--mono);letter-spacing:.14em;font-size:12px;color:var(--violet)}
-.banner span{font-family:var(--mono);letter-spacing:.14em;font-size:12px;color:var(--tx)}
+.banner{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding:9px 16px;background:var(--purple-s);border:1px solid var(--purple-b);border-radius:var(--r);box-shadow:inset 3px 0 0 var(--purple)}
+.banner b,.banner span{font-family:var(--mono);letter-spacing:.24em;font-size:10.5px;font-weight:600}
+.banner b{color:var(--purple-l)} .banner span{color:var(--tx2)}
 
-footer{display:flex;align-items:center;gap:10px;padding:10px 22px;border-top:1px solid var(--line);background:var(--bg2)}
-.fbtn{font-family:var(--mono);font-size:12px;letter-spacing:.12em;border:1px solid var(--line2);border-radius:8px;padding:10px 16px;color:var(--tx2);background:var(--panel)}
-.fbtn:hover{border-color:var(--cyan);color:var(--tx)}
-.fbtn.danger:hover{border-color:var(--red);color:var(--red)}
-.fbtn:disabled{opacity:.35;pointer-events:none}
-.keys{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--tx3);letter-spacing:.06em}
-.keys b{color:var(--tx2);font-weight:400;border:1px solid var(--line2);border-radius:4px;padding:0 5px;margin:0 3px}
+footer{display:flex;align-items:center;gap:var(--s5);padding:12px 40px 14px;border-top:1px solid var(--line)}
+.fbrand{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--tx4);white-space:nowrap}
+.fbtn{font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;color:var(--tx2);padding:6px 0;border-bottom:1px solid transparent}
+.fbtn:hover{color:var(--tx);border-bottom-color:var(--purple)}
+.fbtn.danger:hover{color:var(--red-l);border-bottom-color:var(--red)}
+.fbtn:disabled{opacity:.3;pointer-events:none}
+.keys{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--tx4);letter-spacing:.1em;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.keys b{color:var(--tx3);font-weight:400;border:1px solid var(--line2);border-radius:2px;padding:0 4px;margin:0 3px}
+.ftf{font-family:var(--mono);font-size:10px;letter-spacing:.22em;color:var(--purple-l);white-space:nowrap}
 
 /* overlays */
-.ov{position:fixed;inset:0;background:var(--bg);z-index:20;display:flex;flex-direction:column;padding:22px}
-.ovhead{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-.ovhead h3{font-size:22px;letter-spacing:.08em}
+.ov{position:fixed;inset:0;background:var(--bg);z-index:20;display:flex;flex-direction:column;padding:32px 40px}
+.ovhead{display:flex;align-items:flex-end;gap:var(--s5);padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+.ovhead h3{font-size:34px;font-weight:900;letter-spacing:-.02em;line-height:1;margin-top:10px;text-transform:uppercase}
+.ovhead h3 .light{font-weight:300}
 .ovhead .x{margin-left:auto}
 .ovbody{flex:1;overflow:auto;min-height:0}
-.map{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,260px);gap:10px;min-width:max-content}
+.map{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,250px);gap:14px;min-width:max-content}
 .mcol{display:flex;flex-direction:column;gap:8px}
-.mcol h4{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--tx3);padding:6px 8px;background:var(--card);border-radius:6px;text-align:center}
-.mn{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:12.5px}
-.mn.vis{border-color:#245c5a}
-.mn.cur{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan)}
+.mcol h4{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.24em;color:var(--purple);padding-bottom:8px;border-bottom:1px solid var(--line2)}
+.mn{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;font-size:12.5px}
+.mn.vis{border-color:var(--green-b)}
+.mn.cur{border-color:var(--purple);box-shadow:inset 3px 0 0 var(--purple)}
 .mn .mq{font-weight:700;color:var(--tx);margin-bottom:5px}
-.mn .ms{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--tx3);margin:-3px 0 5px}
-.mn .mo{font-family:var(--mono);font-size:10.5px;color:var(--tx2);display:flex;gap:6px;line-height:1.5}
-.mn .mo b{color:var(--tx);font-weight:400;flex:none}
-.mn .mo .no{color:var(--red)} .mn .mo .wait{color:var(--amber)} .mn .mo .fs{color:var(--violet)} .mn .mo .trade{color:var(--green)} .mn .mo .go{color:var(--cyan)} .mn .mo .review{color:var(--tx2)}
-.rules{max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
-.rule{display:flex;gap:16px;align-items:center;background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:16px 18px;font-size:16px}
-.rule i{font-style:normal;font-family:var(--mono);font-weight:700;padding:6px 10px;border-radius:6px;color:#06100f}
-.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-.lg{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;border:1px solid var(--line2);border-radius:8px;padding:8px 12px}
-.lg i{width:10px;height:10px;border-radius:50%}
+.mn .ms{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--tx4);margin:-2px 0 6px;text-transform:uppercase}
+.mn .mo{font-family:var(--mono);font-size:10.5px;color:var(--tx3);display:flex;gap:6px;line-height:1.6;border-top:1px solid var(--line);padding-top:2px}
+.mn .mo b{color:var(--tx);font-weight:500;flex:none}
+.mn .mo .no{color:var(--red-l)} .mn .mo .wait,.mn .mo .review{color:var(--amber)} .mn .mo .fs{color:var(--purple-l)} .mn .mo .trade{color:var(--green)} .mn .mo .go{color:var(--tx2)}
+.rules{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.rules .box b{font-size:18px;font-weight:700}
+.legend{display:grid;grid-template-columns:repeat(5,1fr);margin-top:12px;border-top:1px solid var(--line)}
+.lg{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--tx2);padding:12px 0;border-bottom:1px solid var(--line)}
 
-@media (max-width:1360px){ main{grid-template-columns:220px minmax(0,1fr) 250px} .q{font-size:38px} }
+@media (max-width:1440px){
+  header,.progress{padding-left:28px;padding-right:28px}
+  main{grid-template-columns:230px minmax(0,1fr) 250px}
+  aside{padding:22px 20px 20px 28px} aside.r{padding:22px 28px 20px 20px}
+  .q{font-size:46px} .res .big{font-size:76px}
+  .stg{padding:6px 8px;letter-spacing:.1em}
+  .hstate{gap:var(--s5)}
+  .fbrand{display:none}
+}
+@media (max-height:920px) and (min-width:1101px){
+  header{padding-top:12px;padding-bottom:8px}
+  .progress{padding-top:6px;padding-bottom:10px}
+  .stg{padding:5px 8px}
+  .center{padding:16px 32px}
+  aside{padding-top:18px} aside.r{padding-top:18px}
+  .srow{padding:5px 0} .tr{padding:4px 0;font-size:12px}
+  .qcard{padding:24px 34px 24px}
+  .q{font-size:38px;margin-top:14px}
+  .chap{margin-top:10px;font-size:13px}
+  .opts{margin-top:20px}
+  .opt{min-height:84px;padding:12px 16px}
+  .opt .t{font-size:26px}
+  .opts.list .opt{min-height:56px}
+  .chkhead{margin-top:16px}
+  .ci{padding:5px 0;font-size:14px}
+  .res{padding:26px 34px 24px}
+  .res .big{font-size:60px;margin-top:12px}
+  .res .why{margin-top:16px;padding-top:12px}
+  .res .why .v{font-size:22px}
+  .res .opts{margin-top:20px}
+  .core{margin-top:14px} .core div{padding:7px 0;font-size:13px}
+  .sum{margin-top:10px} .sum div{padding:3px 0}
+  .plan{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;column-gap:28px} .plan div{padding:6px 0;grid-template-columns:120px 1fr}
+  .banner{margin-bottom:8px;padding:6px 14px}
+  .chain{margin-top:14px}
+  footer{padding-top:8px;padding-bottom:10px}
+}
 @media (max-width:1100px){
   body{overflow:auto;overflow-x:hidden}
   #app{height:auto;min-height:100%}
   main{grid-template-columns:1fr}
-  aside.l,aside.r{border:0;border-top:1px solid var(--line)}
+  aside.l,aside.r{border-top:1px solid var(--line);padding:22px 28px}
   aside.l{order:2} aside.r{order:3}
-  .hstate{display:none}
-  .progress{grid-auto-flow:row;grid-template-columns:repeat(5,1fr)}
+  .hstate,.fbrand{display:none}
+  .cover h1{font-size:68px}
 }
 @media (max-width:700px){
   header,.progress,footer{padding-left:16px;padding-right:16px}
+  header{flex-wrap:wrap;gap:var(--s3)}
+  .hact{gap:var(--s3)} .hact .hbtn:not(.keep){display:none}
   .center{padding:16px}
   .qcard,.res{padding:24px 18px 20px}
-  .q{font-size:28px}
+  .q{font-size:30px} .res .big{font-size:48px}
   .opts.n2,.opts.n3,.opts.n4,.opts.list{grid-template-columns:1fr}
-  .opt{min-height:72px}.opt .t{font-size:24px}
-  .chk,.plan,.res .sum{grid-template-columns:1fr}
-  .res .big{font-size:52px}
-  .tfgrid{grid-template-columns:1fr}
-  .tfcard .tf{font-size:52px}
-  .brand h1{font-size:44px}
+  .opt{min-height:76px}.opt .t{font-size:24px}
+  .chk,.core,.sum{grid-template-columns:1fr}
+  .plan div{grid-template-columns:110px 1fr}
+  .cover{padding:48px 16px 24px}
+  .cover h1{font-size:46px}
+  .tfgrid,.principles{grid-template-columns:1fr}
+  .tfcard{border-right:0;border-bottom:1px solid var(--line)}
+  .tfcard .tf{font-size:48px}
+  .fscard{grid-template-columns:1fr}
   .keys{display:none}
-  .hact .hbtn:not(.keep){display:none}
-  .progress{grid-template-columns:repeat(2,1fr)}
+  .stg{font-size:9.5px;padding:5px 6px}
+  .cfoot{flex-direction:column;gap:6px}
 }
 </style>
 </head>
 <body>
 
-<!-- ================= START ================= -->
+<!-- ================= START · COVER ================= -->
 <section id="start">
-  <div class="brand">
-    <div class="bar"></div>
-    <h1>CBR</h1>
-    <h2>LIVE EXECUTION</h2>
-    <p class="lbl">Trading Decision Cockpit · 15M / 30M / 1H</p>
-  </div>
-  <div class="tfgrid">
-    <button class="tfcard" data-tf="15M"><span class="lbl k">1</span><div class="tf">15M</div><div class="d">Timing · Conf Req · HV5</div></button>
-    <button class="tfcard" data-tf="30M"><span class="lbl k">2</span><div class="tf">30M</div><div class="d">1. Shift · HV5 · 2. Shift</div></button>
-    <button class="tfcard" data-tf="1H"><span class="lbl k">3</span><div class="tf">1H</div><div class="d">1M TP3 · ~50% PB · Shift</div></button>
-  </div>
-  <button class="fscard" data-tf="FSIFS"><b>FS / IFS</b><span>Big external 1M TP3 · Condition Change Route</span><span class="lbl">4</span></button>
-  <button class="resume hidden" id="resumeBtn"></button>
-  <div class="principles">
-    <div class="pr"><i style="background:var(--cyan)">01</i>Shift bestätigt valide Setups – er rettet kein invalides Setup.</div>
-    <div class="pr"><i style="background:var(--amber)">02</i>Pflichtkriterium invalid = NO TRADE. Nur Confirmation schwächer = stärkere Confirmation.</div>
-    <div class="pr"><i style="background:var(--violet)">03</i>Big external 1M TP3 + Condition Change = alten CBR beenden, neu über FS / IFS.</div>
+  <div class="cover">
+    <div class="over">Trading Playbook · Live Execution</div>
+    <h1>CBR<span>LIVE EXECUTION</span></h1>
+    <div class="subt">Condition Based Reversal — Execution Cockpit</div>
+    <div class="lbl subm">Personal Execution Model · 15M / 30M / 1H</div>
+    <div class="quote"><q>Goal is to make every trade look the same.</q><small>Der Edge entsteht aus Wiederholbarkeit und sauberem Kontext — nicht aus einem perfekten Entry.</small></div>
+
+    <div class="sect"><span class="over">Timeframe wählen</span><div class="rule"></div></div>
+    <div class="tfgrid">
+      <button class="tfcard" data-tf="15M"><span class="num">01</span><span class="key">TASTE 1</span><span class="tf">15M</span><span class="d">TIMING · CONFIRMATION · HV5</span></button>
+      <button class="tfcard" data-tf="30M"><span class="num">02</span><span class="key">TASTE 2</span><span class="tf">30M</span><span class="d">FIRST SHIFT · HV5 · SECOND SHIFT</span></button>
+      <button class="tfcard" data-tf="1H"><span class="num">03</span><span class="key">TASTE 3</span><span class="tf">1H</span><span class="d">1M TP3 · REACTION · PULLBACK · SHIFT</span></button>
+    </div>
+    <button class="fscard" data-tf="FSIFS"><span class="over">04 · Condition Change</span><b>FS / IFS</b><span class="d">Big external 1M TP3 · Route · Taste 4</span></button>
+    <button class="resume hidden" id="resumeBtn"></button>
+
+    <div class="principles">
+      <div class="pr"><span class="n">01</span><span>Shift bestätigt valide Setups — er rettet kein invalides Setup.</span></div>
+      <div class="pr"><span class="n">02</span><span>Pflichtkriterium invalid = NO TRADE. Nur Confirmation schwächer = stärkere Confirmation.</span></div>
+      <div class="pr"><span class="n">03</span><span>Big external 1M TP3 + Condition Change = alten CBR beenden, neu über FS / IFS.</span></div>
+    </div>
+    <div class="cfoot"><span>CBR Trading Playbook · Live Execution Edition</span><span>Persönliches Arbeitsmodell · Keine Anlageberatung</span></div>
   </div>
 </section>
 
 <!-- ================= APP ================= -->
 <section id="app" class="hidden">
   <header>
-    <div class="hbrand"><div class="bar"></div><div><b>CBR LIVE EXECUTION</b><small>DECISION COCKPIT</small></div></div>
+    <div class="hbrand"><div class="bar"></div><div><b>CBR LIVE EXECUTION</b><small>PERSONAL EXECUTION MODEL</small></div></div>
     <div class="tfpill" id="tfPill">15M</div>
     <div class="hstate" id="hState"></div>
     <div class="hact">
@@ -273,34 +365,36 @@ footer{display:flex;align-items:center;gap:10px;padding:10px 22px;border-top:1px
   </header>
   <nav class="progress" id="progress"></nav>
   <main>
-    <aside class="l"><div class="lbl">Trade Session</div><div class="sgrid" id="stateList"></div></aside>
+    <aside class="l"><span class="over">Trade State</span><div class="sgrid" id="stateList"></div></aside>
     <div class="center" id="center"></div>
-    <aside class="r"><div class="lbl">Decision Trace</div><div class="trace" id="trace"></div></aside>
+    <aside class="r"><span class="over">Decision Trace</span><div class="trace" id="trace"></div></aside>
   </main>
   <footer>
-    <button class="fbtn" id="backBtn">BACK<kbd>⌫</kbd></button>
+    <span class="fbrand">CBR LIVE EXECUTION · PERSONAL EXECUTION MODEL</span>
+    <button class="fbtn" id="backBtn">← BACK<kbd>⌫</kbd></button>
     <button class="fbtn danger" id="resetBtn">RESET TRADE<kbd>R</kbd></button>
     <button class="fbtn" id="infoBtn">RULE INFO<kbd>I</kbd></button>
-    <div class="keys"><b>1</b>–<b>4</b> Antwort <b>⌫</b> Zurück <b>R</b> Reset <b>M</b> Map <b>I</b> Info <b>T</b> Timeframe</div>
+    <div class="keys"><b>1</b>–<b>9</b> Antwort <b>⌫</b> Zurück <b>R</b> Reset <b>M</b> Map <b>I</b> Info <b>T</b> Timeframe <b>Esc</b> Schließen</div>
+    <span class="ftf" id="footTf">15M · LIVE</span>
   </footer>
 </section>
 
 <div class="ov hidden" id="mapOv">
-  <div class="ovhead"><h3 id="mapTitle">DECISION MAP</h3><span class="lbl">Cyan = aktueller Pfad</span><button class="hbtn x" data-close>CLOSE<kbd>ESC</kbd></button></div>
+  <div class="ovhead"><div><div class="over">Visual Reference · Decision Map</div><h3 id="mapTitle">DECISION MAP</h3></div><span class="lbl">Grün = durchlaufen · Purple = aktuelles Gate</span><button class="hbtn x" data-close>CLOSE<kbd>ESC</kbd></button></div>
   <div class="ovbody"><div class="map" id="map"></div></div>
 </div>
 <div class="ov hidden" id="rulesOv">
-  <div class="ovhead"><h3>CBR CORE RULES</h3><button class="hbtn x" data-close>CLOSE<kbd>ESC</kbd></button></div>
+  <div class="ovhead"><div><div class="over">CBR · Core Rules</div><h3>KEY <span class="light">RULES</span></h3></div><button class="hbtn x" data-close>CLOSE<kbd>ESC</kbd></button></div>
   <div class="ovbody"><div class="rules">
-    <div class="rule"><i style="background:var(--cyan)">01</i>Shift bestätigt valide Setups – er rettet kein invalides Setup.</div>
-    <div class="rule"><i style="background:var(--amber)">02</i>Pflichtkriterium invalid = NO TRADE. Nur Confirmation schwächer = stärkere Confirmation.</div>
-    <div class="rule"><i style="background:var(--violet)">03</i>Big external 1M TP3 + Condition Change = alten CBR beenden und neu über FS / IFS bewerten.</div>
+    <div class="box key"><span class="over">Key Rule · 01</span><b>Shift bestätigt valide Setups — er rettet kein invalides Setup.</b></div>
+    <div class="box no"><span class="over r">Hard Rule · 02</span><b>Pflichtkriterium invalid = NO TRADE. Nur Confirmation schwächer = stärkere Confirmation.</b></div>
+    <div class="box key"><span class="over">Key Rule · 03</span><b>Big external 1M TP3 + Condition Change = alten CBR beenden und neu über FS / IFS bewerten.</b></div>
     <div class="legend">
-      <div class="lg"><i style="background:var(--green)"></i>VALID / WEITER · TRADE</div>
-      <div class="lg"><i style="background:var(--amber)"></i>WAIT</div>
-      <div class="lg"><i style="background:var(--red)"></i>NO TRADE</div>
-      <div class="lg"><i style="background:var(--violet)"></i>CONDITION CHANGE · FS / IFS</div>
-      <div class="lg"><i style="background:var(--test)"></i>TEST / BACKTEST</div>
+      <div class="lg"><i class="sq g"></i>VALID · TRADE</div>
+      <div class="lg"><i class="sq a"></i>WAIT · TEST</div>
+      <div class="lg"><i class="sq r"></i>NO TRADE</div>
+      <div class="lg"><i class="sq"></i>CBR · FS / IFS</div>
+      <div class="lg"><i class="sq n"></i>INFO</div>
     </div>
   </div></div>
 </div>
@@ -791,13 +885,40 @@ function resultOptions(){
 }
 
 /* =====================================================================
-   RENDER
+   RENDER  (nur Darstellung – liest State, verändert ihn nicht)
    ===================================================================== */
 const STATE_FIELDS = [
   ['tf','Timeframe'],['stage','Stage'],['cond','Condition'],['type','Trade Type'],['er','ER'],['aoi','AOI'],
   ['oe','OE'],['cb','Candle B.'],['timing','Timing'],['conf','Confirmation'],['shift','Shift / Entry'],
   ['order','Order'],['sl','SL'],['rr','RR'],['tp','TP']];
 const FS_FIELDS = [['tf','Route'],['stage','Stage'],['old','Alter CBR'],['route','FS / IFS'],['ncond','Condition neu'],['naoi','AOI neu'],['ner','ER neu']];
+
+// Playbook-Kapitelsprache je Stage: [Overline-Label, Headline fett, Headline light]
+const STAGE_META = {
+  'CONDITION':['Condition','Condition','— What?'],
+  'TYPE':['Trade Type','Trade Type','— Pro · Range · Counter'],
+  '1M TP3':['Big 1M TP3 Gate','1M TP3','— Condition Change Gate'],
+  'AOI / ER':['AOI / ER','Area of Interest','— Where?'],
+  'OE / CB':['OE / Candle Behaviour','Overextension','— How?'],
+  'TIMING':['Timing / Confirmation','Timing','— When?'],
+  'SHIFT':['Shift','Shift','— Type 3 Confirmation'],
+  'ENTRY':['Entry','Entry','— Structured Entry'],
+  'SL / TP':['SL / TP','Stop Loss & Take Profit','— Risk'],
+  'FINAL':['Final Gate','Pre-Trade','Checklist'],
+};
+const FS_META = {
+  '1M TP3':['Condition Change','Big External 1M TP3','— Condition Change?'],
+  'CONDITION NEU':['Condition neu','Condition','— neu bestimmen'],
+  'AOI NEU':['AOI neu','Area of Interest','— neu'],
+  'ER NEU':['ER neu','ER','— neu messen'],
+  'FS / IFS':['FS / IFS','FS / IFS','— New Structure'],
+};
+const pad2 = n => String(n).padStart(2,'0');
+function stageMeta(stage){
+  const m = (S.tree==='FSIFS' ? FS_META : STAGE_META)[stage] || [stage, stage, ''];
+  const i = T().stages.indexOf(stage);
+  return {num: pad2(i+1), over:m[0], h1:m[1], h2:m[2]};
+}
 
 function curStage(){
   if(S.result && S.result.stage) return S.result.stage;
@@ -812,19 +933,22 @@ function render(){
   if(!S) return;
   const tree = T(), st = S.state, stage = curStage();
   const isFS = S.tree==='FSIFS';
+  const tfLabel = isFS ? 'FS / IFS' : S.tree;
   // header
-  const pill = $('tfPill'); pill.textContent = isFS ? 'FS / IFS' : S.tree; pill.classList.toggle('fs', isFS);
+  $('tfPill').textContent = tfLabel;
   const hs = isFS
     ? [['Route', st.route||'—'],['Stage', stage],['Condition neu', st.ncond||'—']]
-    : [['Timeframe', S.tree],['Current Stage', stage],['Trade Type', st.type||'—'],['Condition', st.cond||'—']];
+    : [['Current Stage', stage],['Trade Type', st.type||'—'],['Condition', st.cond||'—']];
   $('hState').innerHTML = hs.map(([k,v]) => `<div class="hs"><div class="lbl">${k}</div><div class="v">${esc(v)}</div></div>`).join('');
-  // progress
+  const ft = $('footTf'); if(ft) ft.textContent = tfLabel + ' · LIVE';
+  // progress — Core-Model-Sequenz
   const si = tree.stages.indexOf(stage);
   $('progress').innerHTML = tree.stages.map((s,i) =>
-    `<div class="stg ${i<si?'done':''} ${i===si?'cur '+resCls():''}">${s}</div>`).join('');
-  // state list
+    (i ? `<span class="sep ${i<=si?'done':''}">›</span>` : '') +
+    `<span class="stg ${i<si?'done':''} ${i===si?'cur '+resCls():''}"><i></i>${s}</span>`).join('');
+  // trade state table
   const fields = isFS ? FS_FIELDS : STATE_FIELDS;
-  const vals = Object.assign({}, st, {tf: isFS?'FS / IFS':S.tree, stage, old: isFS?'BEENDET':''});
+  const vals = Object.assign({}, st, {tf: tfLabel, stage, old: isFS?'BEENDET':''});
   $('stateList').innerHTML = fields.map(([k,l]) => {
     const v = vals[k]; let c = v ? '' : 'na';
     if(v && /VALID|OK|EXTERNAL|≥0\.7|hält|da$/.test(v)) c='ok';
@@ -833,15 +957,14 @@ function render(){
     if(v && /<30%|<0\.7|TEST/.test(v)) c='am';
     return `<div class="srow"><span>${l}</span><b class="${c}">${esc(v||'—')}</b></div>`;
   }).join('');
-  // trace
-  let lastSt = null, th = '';
+  // decision trace — nummerierte Prozessliste
+  let th = '', no = 0;
   S.trace.forEach(t => {
-    if(t.st && t.st!==lastSt){ th += `<div class="tr stg-h">${esc(t.st)}</div>`; lastSt = t.st; }
-    const ic = {ok:'✓', no:'✕', wait:'◷', cc:'◆', nt:'→', review:'?'}[t.k] || '✓';
-    th += `<div class="tr ${t.k}"><i>${ic}</i><span>${esc(t.x)}</span></div>`;
+    no++;
+    th += `<div class="tr ${t.k}"><i>${pad2(no)}</i><span>${esc(t.x)}</span></div>`;
   });
-  if(!S.result){ const n = tree.nodes[S.node]; th += `<div class="tr now"><i>→</i><span>${esc(fill(n.q, st).replace(/<[^>]+>/g,''))}</span></div>`; }
-  $('trace').innerHTML = th || '<div class="tr"><span class="lbl">noch keine Entscheidung</span></div>';
+  if(!S.result){ const n = tree.nodes[S.node]; th += `<div class="tr now"><i>${pad2(no+1)}</i><span>${esc(fill(n.q, st).replace(/<[^>]+>/g,''))}</span></div>`; }
+  $('trace').innerHTML = th || '<div class="tr empty">Noch keine Entscheidung</div>';
   $('trace').parentElement.scrollTop = 1e6;
   // center
   $('center').innerHTML = (S.closed ? `<div class="banner"><b>OLD CBR CLOSED</b><span>NEW STRUCTURE EVALUATION</span></div>` : '')
@@ -854,25 +977,26 @@ function optsHtml(opts, listMode){
   const n = opts.length;
   const cls = listMode ? 'list' : 'n'+Math.min(n,4);
   return `<div class="opts ${cls}">` + opts.map((o,i) =>
-    `<button class="opt ${optClass(o)}" data-i="${i}"><span class="k">${i+1}</span><span class="t">${esc(o.t)}</span><span class="s">${esc(optSub(o))}</span></button>`
+    `<button class="opt ${optClass(o)}" data-i="${i}"><span class="k">${pad2(i+1)}</span><span class="t">${esc(o.t)}</span><span class="s">${esc(optSub(o))}</span></button>`
   ).join('') + `</div>`;
 }
 
 function renderNode(){
   const n = T().nodes[S.node], st = S.state;
-  const accent = n.stage==='FINAL' ? 'var(--green)' : (S.tree==='FSIFS' ? 'var(--violet)' : (n.test ? 'var(--test)' : 'var(--cyan)'));
-  let h = `<div class="qcard" style="--accent:${accent}">`;
-  h += `<div class="qhead"><span class="lbl">${esc(n.stage)}</span>${n.test?'<span class="tag test">TEST</span>':''}`;
+  const m = stageMeta(n.stage);
+  let h = `<div class="qcard">`;
+  h += `<div class="qhead"><span class="sq"></span><span class="over">${m.num} · ${esc(m.over)}</span>${n.test?'<span class="tag test">TEST</span>':''}`;
   if(n.info) h += `<button class="ibtn ${infoOpen?'on':''}" id="ibtn" title="Info (I)">i</button>`;
   h += `</div>`;
   h += `<div class="q">${esc(fill(n.q, st))}</div>`;
+  h += `<div class="chap">${esc(m.h1)} <span class="light">${esc(m.h2)}</span></div>`;
   if(n.sub) h += `<div class="qsub">${fill(n.sub, st, true)}</div>`;
-  if(n.info && infoOpen) h += `<div class="info">${esc(n.info)}</div>`;
+  if(n.info && infoOpen) h += `<div class="box key info"><span class="over">Key Rule · Rule Info</span>${esc(n.info)}</div>`;
   if(n.kind==='final'){
     const items = FINAL[S.tree];
     // Jedes Pflicht-Gate wird im aktiven Pfad abgefragt (siehe Pfadtests) -> hier nur Bestätigung
-    h += `<div class="lbl" style="margin-top:20px">${S.tree} FINAL GATE</div><div class="chk">` + items.map(it =>
-      `<div class="ci ok"><i>OK</i>${esc(it.l)}</div>`).join('') + `</div>`;
+    h += `<div class="chkhead"><span class="sq g"></span><span class="over g">${S.tree} Final Gate · Pflicht-Gates</span></div><div class="chk">` + items.map(it =>
+      `<div class="ci"><i>✓</i>${esc(it.l)}</div>`).join('') + `</div>`;
   }
   const opts = optionsFor(n);
   h += optsHtml(opts, n.kind==='failsel');
@@ -882,29 +1006,34 @@ function renderNode(){
 
 function renderResult(){
   const r = S.result, st = S.state;
+  const sm = r.stage ? stageMeta(r.stage) : null;
+  const stageTxt = sm ? `${sm.num} · ${sm.over}` : '';
   let h = '';
   if(r.type==='TRADE'){
-    h = `<div class="res r-trade"><div class="lbl">${S.tree} · FINAL GATE OK</div><div class="big">TRADE</div>
+    h = `<div class="res r-trade"><div class="over g">Final Gate · All Core Elements Valid</div><div class="big"><span class="c">TRADE</span></div>
+      <div class="core">${['Clear Condition','Right Area','Clean OE','Right Timing','Valid Shift','Structured Entry']
+        .map(x=>`<div><span class="sq g"></span>${x.toUpperCase()}</div>`).join('')}</div>
       <div class="sum">${[['Condition',st.cond],['Type',st.type],['ER',st.er],['Timing',st.timing],['Confirmation',st.conf],['Shift / Entry',st.shift],['Order',st.order],['SL',st.sl],['RR / TP',(st.rr||'—')+' / '+(st.tp||'—')]]
         .map(([k,v])=>`<div><span>${k}</span><b>${esc(v||'—')}</b></div>`).join('')}</div>`;
   } else if(r.type==='WAIT'){
-    h = `<div class="res r-wait"><div class="lbl">WAIT · ${esc(r.stage||'')}</div><div class="big">WAIT</div>
-      <div class="why"><div class="lbl">Warte auf</div><div class="v">${esc(r.wait)}</div></div>`;
+    h = `<div class="res r-wait"><div class="over a">Execution Status</div><div class="big"><span class="c">WAIT</span></div>
+      <div class="why"><div class="over a">Waiting for</div><div class="v">${esc(r.wait)}</div></div>
+      <div class="meta">${esc(stageTxt)}</div>`;
   } else if(r.type==='NO'){
-    h = `<div class="res r-no"><div class="lbl">NO TRADE</div><div class="big">NO TRADE</div>
-      <div class="why"><div class="lbl">Failed Gate</div><div class="v">${esc(r.gate)}</div></div>
-      <div class="meta">Stage: ${esc(r.stage||'')}</div>`;
+    h = `<div class="res r-no"><div class="over r">Hard Rule</div><div class="big"><span class="c">NO</span> <span class="light">TRADE</span></div>
+      <div class="why"><div class="over r">Failed Gate</div><div class="v">${esc(r.gate)}</div></div>
+      <div class="meta">Stage: ${esc(stageTxt)}</div>`;
   } else if(r.type==='FS'){
-    h = `<div class="res r-fs"><div class="lbl">BIG EXTERNAL 1M TP3 + CONDITION CHANGE</div><div class="big">FS / IFS</div>
-      <div class="why"><div class="v">ALTER CBR BEENDET</div></div>
-      <div class="flow">Condition neu → AOI neu → ER neu → FS / IFS</div>`;
+    h = `<div class="res r-fs"><div class="over">Condition Change</div><div class="big">OLD CBR <span class="c">CLOSED</span></div>
+      <div class="why"><div class="v">NEW STRUCTURE EVALUATION</div></div>
+      <div class="chain">BIG EXTERNAL 1M TP3 <i>+</i> CONDITION CHANGE <i>›</i> CONDITION NEU <i>›</i> AOI NEU <i>›</i> ER NEU <i>›</i> FS / IFS</div>`;
   } else if(r.type==='REVIEW'){
-    h = `<div class="res r-review"><div class="lbl">REVIEW_REQUIRED · ${esc(r.stage||'')}</div><div class="big">REGEL PRÜFEN</div>
+    h = `<div class="res r-review"><div class="over a">Research / Rule Clarification</div><div class="big"><span class="c">REGEL</span> <span class="light">PRÜFEN</span></div>
       <div class="why"><div class="v">Dieser Pfad ist im aktuellen Decision Map nicht eindeutig definiert.</div></div>
-      <div class="meta">Pfad: ${esc(r.path)}</div>`;
+      <div class="meta">Research Variable · Pfad: ${esc(r.path)}</div>`;
   } else if(r.type==='NORMAL'){
-    h = `<div class="res r-normal"><div class="lbl">KEIN CONDITION CHANGE</div><div class="big">NORMALER CBR</div>
-      <div class="flow">Weiter im normalen CBR – Timeframe wählen.</div>`;
+    h = `<div class="res"><div class="over n">Kein Condition Change</div><div class="big">NORMALER <span class="light">CBR</span></div>
+      <div class="why"><div class="v">Weiter im normalen CBR — Timeframe wählen.</div></div>`;
   } else if(r.type==='PLAN'){
     const fs = st.route!=='IFS', bull = st.ncond==='BULL';
     const items = fs ? [
@@ -920,9 +1049,9 @@ function renderResult(){
       ['Basis', 'Korrektur'],
       ['Condition neu', st.ncond]
     ];
-    h = `<div class="res r-fs"><div class="lbl">NEW STRUCTURE · CONDITION ${esc(st.ncond||'')} · AOI NEU · ER NEU</div><div class="big">${fs?'FS':'IFS'}</div>
-      <div class="plan">${items.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}
-      <div class="opt-note"><span>OPTION · TEST</span><b>Früher Entry nur wenn Shift-Aufbau klar</b></div></div>`;
+    h = `<div class="res r-fs"><div class="over">New Structure Evaluation · Condition ${esc(st.ncond||'')} · AOI neu · ER neu</div><div class="big"><span class="c">${fs?'FS':'IFS'}</span></div>
+      <div class="plan">${items.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>
+      <div class="box test"><span class="over a">Option · Test</span><b>Früher Entry nur wenn Shift-Aufbau klar</b></div>`;
   }
   h += optsHtml(resultOptions()) + `</div>`;
   return h;
@@ -953,11 +1082,11 @@ function targetLabel(o){
 function renderMap(){
   const tree = T();
   const visited = new Set(S.hist.map(x=>x.node));
-  $('mapTitle').textContent = (S.tree==='FSIFS'?'FS / IFS':S.tree) + ' DECISION MAP';
-  $('map').innerHTML = tree.stages.map(sg => {
+  $('mapTitle').innerHTML = esc(S.tree==='FSIFS'?'FS / IFS':S.tree) + ' <span class="light">Decision Map</span>';
+  $('map').innerHTML = tree.stages.map((sg,i) => {
     const ns = Object.entries(tree.nodes).filter(([id,n]) => n.stage===sg && n.options);
     if(!ns.length) return '';
-    return `<div class="mcol"><h4>${sg}</h4>` + ns.map(([id,n]) =>
+    return `<div class="mcol"><h4>${pad2(i+1)} · ${sg}</h4>` + ns.map(([id,n]) =>
       `<div class="mn ${visited.has(id)?'vis':''} ${id===S.node&&!S.result?'cur':''}">
         <div class="mq">${esc(fill(n.q,S.state))}${n.test?' <span class="tag test">TEST</span>':''}</div>
         ${n.sub?`<div class="ms">${esc(fill(n.sub,S.state).replace(/<[^>]+>/g,''))}</div>`:''}
