@@ -324,6 +324,25 @@ footer{display:flex;align-items:center;gap:var(--s5);padding:12px 40px 14px;bord
   .stg{font-size:9.5px;padding:5px 6px}
   .cfoot{flex-direction:column;gap:6px}
 }
+
+/* ===================== CBR VOICE (additiv) ===================== */
+.vbtn.von{color:var(--purple-l);border-bottom-color:var(--purple)}
+.vstat{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--tx4);white-space:nowrap}
+.vstat i{width:7px;height:7px;background:var(--tx5);flex:none}
+.vstat[data-s="READY"],.vstat[data-s="SPEAKING"]{color:var(--purple-l)} .vstat[data-s="READY"] i,.vstat[data-s="SPEAKING"] i{background:var(--purple)}
+.vstat[data-s="LISTENING"]{color:var(--green)} .vstat[data-s="LISTENING"] i{background:var(--green)}
+.vstat[data-s="PROCESSING"],.vstat[data-s="THINKING"],.vstat[data-s="CONFIRMING"],.vstat[data-s="UNSUPPORTED"]{color:var(--amber)}
+.vstat[data-s="PROCESSING"] i,.vstat[data-s="THINKING"] i,.vstat[data-s="CONFIRMING"] i,.vstat[data-s="UNSUPPORTED"] i{background:var(--amber)}
+.vstat[data-s="ERROR"]{color:var(--red-l)} .vstat[data-s="ERROR"] i{background:var(--red)}
+.vline{display:none;min-width:0;width:0;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--tx3)}
+.vline .vu{color:var(--tx2);margin-right:16px} .vline .vu.dim{color:var(--tx4)} .vline .vc{color:var(--purple-l)}
+body.voice-on footer .keys{display:none} body.voice-on .vline{display:block}
+.vstart{display:flex;align-items:center;gap:var(--s5);margin-top:var(--s4);min-width:0}
+.vsbtn{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--tx2);padding:var(--s2) 0;border-bottom:1px solid var(--line2);white-space:nowrap}
+.vsbtn:hover,.vsbtn.von{color:var(--purple-l);border-color:var(--purple)}
+#app{grid-template-columns:minmax(0,1fr)}
+.vstart .vline{flex:1 1 0}
+@media (max-width:700px){ .vstart{flex-wrap:wrap;gap:var(--s3)} header .hact{flex-wrap:wrap;min-width:0} header .vstat span{display:none} .hact .hbtn kbd{display:none} }
 </style>
 </head>
 <body>
@@ -345,6 +364,7 @@ footer{display:flex;align-items:center;gap:var(--s5);padding:12px 40px 14px;bord
     </div>
     <button class="fscard" data-tf="FSIFS"><span class="over">04 · Condition Change</span><b>FS / IFS</b><span class="d">Big external 1M TP3 · Route · Taste 4</span></button>
     <button class="resume hidden" id="resumeBtn"></button>
+    <div class="vstart"><button class="vsbtn vbtn" id="voiceBtnStart">VOICE · TASTE V</button><span class="vstat" data-s="OFF"><i></i><span>VOICE OFF</span></span><span class="vline"></span></div>
 
     <div class="principles">
       <div class="pr"><span class="n">01</span><span>Shift bestätigt valide Setups — er rettet kein invalides Setup.</span></div>
@@ -362,6 +382,8 @@ footer{display:flex;align-items:center;gap:var(--s5);padding:12px 40px 14px;bord
     <div class="tfpill" id="tfPill">15M</div>
     <div class="hstate" id="hState"></div>
     <div class="hact">
+      <span class="vstat" data-s="OFF"><i></i><span>VOICE OFF</span></span>
+      <button class="hbtn vbtn keep" id="voiceBtn">VOICE<kbd>V</kbd></button>
       <button class="hbtn" id="mapBtn">SHOW MAP<kbd>M</kbd></button>
       <button class="hbtn" id="rulesBtn">RULES<kbd>?</kbd></button>
       <button class="hbtn keep" id="homeBtn">TIMEFRAME<kbd>T</kbd></button>
@@ -378,6 +400,7 @@ footer{display:flex;align-items:center;gap:var(--s5);padding:12px 40px 14px;bord
     <button class="fbtn" id="backBtn">← BACK<kbd>⌫</kbd></button>
     <button class="fbtn danger" id="resetBtn">RESET TRADE<kbd>R</kbd></button>
     <button class="fbtn" id="infoBtn">RULE INFO<kbd>I</kbd></button>
+    <div class="vline"></div>
     <div class="keys"><b>1</b>–<b>9</b> Antwort <b>⌫</b> Zurück <b>R</b> Reset <b>M</b> Map <b>I</b> Info <b>T</b> Timeframe <b>Esc</b> Schließen</div>
     <span class="ftf" id="footTf">15M · LIVE</span>
   </footer>
@@ -1156,6 +1179,1136 @@ document.addEventListener('keydown', e => {
 
 // Export für Tests
 window.CBR = {TREES, FINAL, STAGES};
+</script>
+
+<script>
+/* =====================================================================
+   CBR VOICE ASSISTANT
+   Wake Word · Conversation · STT · TTS · Command Router · AI Layer
+   ---------------------------------------------------------------------
+   Rein additive Schicht. Die CBR Execution Engine (Script oben) bleibt
+   die einzige Quelle für Tradingentscheidungen.
+
+   Der Voice Assistant
+   · LIEST nur den Engine-Zustand: S, T(), optionsFor(), resultOptions(),
+     FINAL, TREES, curStage(), fill(), load()
+   · LÖST nur bestehende Engine-Aktionen aus: choose(i), back(),
+     resetTrade(), home(), startTree(tf), openOv(), closeOv(), toggleInfo()
+     (recheck / startFS / Neuer Trade laufen über choose(i) auf die
+     Result-Optionen – exakt wie ein Klick)
+   · Die KI-Schicht ist EXPLAIN ONLY: sie liefert nur Text, ihre Antwort
+     wird nie als Befehl ausgewertet und kann keine Option auswählen.
+   Wird dieser <script>-Block entfernt, funktioniert das Cockpit wie zuvor.
+   ===================================================================== */
+(function(){
+'use strict';
+
+const CBR_VOICE_CONFIG = {
+  enabled: false,
+  language: 'de-DE',
+  wakeWord: 'hey cbr',
+  autoReadQuestions: true,
+  confirmAnswers: true,
+  continuousMode: true,
+  sessionTimeout: 60000,
+  duplicateWindow: 1000,
+  aiEnabled: true,
+  debug: false,
+  // technische Ergänzungen
+  aiBase: /^https?:$/.test(location.protocol) ? '' : 'http://localhost:8787',  // index.html über server.js oder lokal per Doppelklick
+  aiTimeout: 15000,
+  echoTail: 700,          // ms nach CBR-Sprachausgabe, in denen Eingaben ignoriert werden (Eigen-Echo)
+  answerLock: 600,        // ms nach choose(), in denen keine weitere Antwort angenommen wird
+};
+
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const SYNTH = ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) ? window.speechSynthesis : null;
+
+const V = {
+  status:'OFF', rec:null, recRunning:false, wanted:false, fatal:false,
+  conv:false, readOnly:false,
+  speaking:false, speakEndAt:0, speakToken:0, lastSpoken:'', bargeable:false,
+  lastKey:null, pending:null, timer:null, moTimer:null,
+  lastFinal:{t:'',at:0}, lockUntil:0,
+  restartDelay:300, restartTimer:null, netErr:0,
+  aiAvailable:null, aiCheckedAt:0, aiAbort:null, aiCancelled:false, busy:false,
+  lastQuestion:null, greeted:false, audio:null, voice:null,
+  lastUser:'', lastCbr:'', interim:'',
+};
+const log = (...a) => { if(CBR_VOICE_CONFIG.debug) console.log('[CBR Voice]', ...a); };
+
+/* =====================================================================
+   CBR KNOWLEDGE (nur vorhandene Regeln: Decision Map + CBR Trading Playbook)
+   ===================================================================== */
+const CORE_RULES = [
+  'Shift bestätigt valide Setups – er rettet kein invalides Setup.',
+  'Pflichtkriterium invalid = NO TRADE. Nur Confirmation schwächer = stärkere Confirmation.',
+  'Big external 1M TP3 + Condition Change = alten CBR beenden und neu über FS / IFS bewerten.',
+];
+// kurze, sprechbare Kernaussage je Stage (Playbook)
+const STAGE_RULE = {
+  'CONDITION':'Laut Playbook müssen mindestens zwei klar wiederholte Legs erkennbar sein. Die Condition muss klar und aktuell sein. Keine klare Condition heißt kein Trade.',
+  'TYPE':'Der Trade Type ergibt sich aus der Condition: Range aus der Ranging Range, Pro aus Clean Trend oder Normal TR, Counter nur aus Normal TR.',
+  '1M TP3':'Big external 1M TP3 plus Condition Change beendet den alten CBR. Dann wird neu über FS oder IFS bewertet.',
+  'AOI / ER':'Laut Playbook ist ein Shift ohne sinnvolle Location kein vollständiges Setup. Der Shift soll bevorzugt am Extrem der aktuellen Bewegung entstehen.',
+  'OE / CB':'Laut Playbook muss die Bewegung in das Extrem qualitativ passen: clean, impulsiv und mit möglichst wenigen relevanten Pullbacks. Messy OE schwächt das Setup.',
+  'TIMING':'Laut Playbook ist das Timing ein Filter innerhalb eines bereits gültigen Setups. Das CB beantwortet das Wann, nicht das Ob.',
+  'SHIFT':'Shift bestätigt valide Setups, er rettet kein invalides Setup. Nur Mikro-BOS oder unklare Struktur ist kein sauberer Shift.',
+  'ENTRY':'Laut Playbook kommt der Entry erst nach Condition, Where, OE, CB und Shift. Kein Chase.',
+  'SL / TP':'Laut Playbook: SL always external, der TP wird strukturell gesetzt. Structure defines risk, not the desired R:R.',
+  'FINAL':'Laut Playbook gilt: Missing one core element = No Trade.',
+  'CONDITION NEU':'Nach Big external 1M TP3 plus Condition Change wird die Condition neu bestimmt.',
+  'AOI NEU':'In der FS-Route werden AOIs über 3M FVG plus Open/Close bestimmt.',
+  'ER NEU':'Das ER wird auf der neuen Struktur neu gemessen.',
+  'FS / IFS':'FS folgt der Shift-Richtung, IFS ist die Korrektur mit etwa 50 Prozent Orientierung.',
+};
+// ausführlichere Playbook-Auszüge – nur als Kontext für die KI-Erklärschicht
+const PLAYBOOK = {
+  'CONDITION':'Kap. 01 Condition — What? Die Condition beschreibt, was der Markt zuletzt wiederholt und konsistent gemacht hat; wichtigster Filter des Modells. Hauptregel: Mindestens 2 klar wiederholte Legs. Erst dadurch entsteht ein wiederkehrendes Muster; das 3. Leg kann getradet werden, wenn der restliche Kontext passt. Condition primär im 2-Minuten-Chart beurteilen; auf wiederkehrende Legs, Pullback-Tiefe und Rhythmus achten. Condition muss klar und aktuell sein. Verändert sich die Condition oder wird sie unklar: kein Trade. Unklare/chaotische Price Action: kein Trade. NO CLEAR CONDITION = NO TRADE.',
+  'TYPE':'Decision Map: Ranging Range + Gegenleg/Leg ≥75% → RANGE. Trending Range + externe HH/HL bzw. LH/LL → 2 Corrections ca. <50%? JA → Clean Trend (Counter = NO TRADE, sonst PRO); NEIN → Normal TR → PRO oder COUNTER.',
+  '1M TP3':'Decision Map: Big 1M TP3 + Condition Change → STOP → FS / IFS, alter CBR beendet. Sonst weiter zu AOI / ER.',
+  'AOI / ER':'Kap. 02 Area of Interest — Where? Leitfrage: Wo möchte ich den Shift überhaupt sehen? Der Shift soll an einer sinnvollen Area bzw. bevorzugt am Extrem der aktuellen Bewegung/Struktur entstehen. Nicht mitten in beliebiger Struktur traden. Die Area muss zum erwarteten Reversal passen. Key Rule: Ein Shift ohne sinnvolle Location ist kein vollständiges Setup.',
+  'OE / CB':'Kap. 03 Overextension — How? Good OE: clean und impulsiv, möglichst wenige relevante Pullbacks, klare Entfernung vom Gleichgewicht, Bewegung wird zunehmend schwächer. Bad/Messy OE: viele Rücksetzer, unklare Price Action, bereits zu viel Rebalancing, keine klare einseitige Überdehnung. Merksatz: Clean Extension → Weakening Momentum → Shift → Reversal. Messy Price Action schwächt das Setup, auch wenn Condition und AOI stimmen.',
+  'TIMING':'Kap. 05 15m/30m CBR — When? Das Timing ist ein Filter, aber kein alleiniger Entry-Grund. Nicht wegen einer Uhrzeit handeln, wenn Condition, Area oder OE fehlen. Das CB beantwortet das Wann — nicht das Ob. Timing ist ein Filter innerhalb eines bereits gültigen Setups.',
+  'SHIFT':'Kap. 06 Shift — Type 3 Confirmation. Bearish: relevantes High wird nochmals genommen, anschließend das relevante Low gebrochen. Bullish: relevantes Low wird nochmals genommen, anschließend das relevante High gebrochen. Ein einzelner Gegentick oder Mikro-BOS reicht nicht. Der Shift-Indikator (u. a. Einstellungen 2 und 3) ist nur visuelle Hilfe. Key Rule: Structure > Indicator.',
+  'ENTRY':'Kap. 07 Entry: Entry erst nach Condition + Where + OE + CB + Shift. Pullback in die Shift- bzw. Break-Struktur bevorzugen. Kein Entry erzwingen. Kein Chase. Kein Pullback / kein sinnvoller Entry = Trade ziehen lassen. Decision Map: Market Standard | Stop nur perfektes Setup.',
+  'SL / TP':'Kap. 11 Stop Loss: SL immer external hinter die relevante externe Struktur; keine ultraknappen Stops; niemals enger setzen für ein besseres R:R. Kap. 12 Take Profit: TP strukturell und realistisch, nicht über die zweite relevante 5s-Struktur hinaus. Decision Map: SL external? RR ≥0.7? TP ≤2R + Typ-Logik?',
+  'FINAL':'Kap. 16 No Trade — Hard Rule: Missing one core element = No Trade. Es gibt keinen Ersatz-Trigger für eine fehlende Condition, Area, OE oder einen fehlenden Shift.',
+};
+// Glossar: Playbook-Definitionen bzw. ausdrücklich nur die Verwendung im Decision Tree
+const GLOSSARY = [
+  {k:'CBR', a:['cbr','c b r','condition based reversal'], t:'CBR steht für Condition Based Reversal, das Grundmodell des Playbooks. Jeder Trade durchläuft dieselbe Kette: Condition, Area, Overextension, CBR-Timing, Shift, Entry und Management.'},
+  {k:'Condition', a:['condition','kondition'], t:'Die Condition ist laut Playbook das wiederkehrende Marktverhalten, primär im 2-Minuten-Chart erkannt. Mindestens zwei klar wiederholte Legs müssen erkennbar sein. Keine klare Condition heißt kein Trade.'},
+  {k:'Condition Change', a:['condition change','conditionchange'], t:'Condition Change heißt laut Playbook: Der Markt verhält sich unmittelbar vor dem Setup anders als zuvor. Im Decision Tree führt ein Condition Change zur FS- oder IFS-Route; Big external 1M TP3 plus Condition Change beendet den alten CBR.'},
+  {k:'Leg', a:['leg','legs','gegenleg'], t:'Ein Leg ist laut Playbook eine einzelne strukturelle Bewegungsphase innerhalb der Condition. Leg 1 und Leg 2 definieren das wiederkehrende Muster, ein mögliches Leg 3 kann zur Trade Opportunity werden. Im Decision Tree braucht die Ranging Range ein Gegenleg beziehungsweise Leg von mindestens 75 Prozent.'},
+  {k:'AOI', a:['aoi','a o i','area of interest'], t:'AOI heißt Area of Interest: der Bereich, an dem ein Shift sinnvoll erwartet wird, bevorzugt am Extrem der aktuellen Bewegung. Ein Shift ohne sinnvolle Location ist kein vollständiges Setup.'},
+  {k:'OE', a:['oe','o e','ö','overextension','over extension','überdehnung'], t:'OE heißt Overextension: die überdehnte Bewegung in Richtung des Extremes. Laut Playbook bevorzugt clean, impulsiv und mit möglichst wenigen relevanten Pullbacks. Messy OE schwächt das Setup. Im Decision Tree muss die OE mindestens 30 Prozent sein, sonst Wait.'},
+  {k:'CB', a:['cb','c b','candle behaviour','candle behavior'], t:'CB steht in der Decision Map für Candle Behaviour. Laut Playbook beantwortet das CB das Wann, nicht das Ob. Im Tree gehören dazu Pullback in der OE und Wick: PB in OE über 40 Prozent oder Wick über 30 Prozent ist No Trade.'},
+  {k:'Shift', a:['shift','type 3','typ 3','type drei','typ drei'], t:'Der Shift ist laut Playbook die strukturelle Type-3-Bestätigung: Ein relevantes High oder Low wird nochmals genommen, danach wird das gegenüberliegende relevante Level gebrochen. Ein einzelner Gegentick oder Mikro-BOS reicht nicht. Structure vor Indicator.'},
+  {k:'BOS', a:['bos','b o s','break of structure','micro bos','mikro bos'], t:'BOS ist ein Break of Structure, der Bruch einer relevanten Marktstruktur. Nicht jeder BOS ist automatisch ein gültiger Shift. Nur Mikro-BOS ist kein sauberer Shift und damit kein Trade.'},
+  {k:'IND', a:['ind','i n d','indikator','indicator','shift indicator','shift indikator'], t:'Laut Playbook ist der Shift-Indikator, unter anderem mit den Einstellungen 2 und 3, nur eine optionale visuelle Hilfe und ersetzt nicht die eigene Strukturlesung. Im Decision Tree erscheint IND als Confirmation, zum Beispiel TP3 oder IND, und im 1-Stunden-Modell als Gate Shift Indicator. Die Abkürzung IND ist im System nicht ausgeschrieben definiert.'},
+  {k:'ER', a:['er','e r','eh er','ee er'], t:'ER ist im aktuellen CBR-System nicht ausgeschrieben definiert. Im Decision Tree wird ER in der AOI-Prüfung verwendet: Pro braucht mindestens 61,8 Prozent, ab 75 Prozent ist die AOI direkt OK, darunter braucht es FVG oder O-C. Range braucht 75 bis 120 Prozent.'},
+  {k:'HV5', a:['hv5','hv 5','h v 5','ha vau 5','ha fau 5','hv fünf'], t:'HV5 ist im aktuellen CBR-System nicht genauer definiert. Im Decision Tree gilt: Im 15-Minuten-Modell führt zu weit oder HV5 Break zu Wait auf Pullback plus Reaction. Im 30-Minuten-Modell gilt: Bricht HV5 den ersten Shift, wird auf Pullback, Reaction und zweiten Shift gewartet.'},
+  {k:'TP3', a:['tp3','tp 3','t p 3','te pe 3','tee pee 3','1m tp3','1 m tp3'], t:'TP3 ist im aktuellen CBR-System nicht genauer definiert. Im Decision Tree ist TP3 eine geforderte Confirmation: im 15-Minuten-Modell bei Timing 30 bis 50 Prozent oder ohne A-plus, im 30-Minuten-Modell ohne A-plus. Im 1-Stunden-Modell ist der 1-Minuten TP3 ein eigenes Gate. Big 1M TP3 mit Condition Change führt zu FS oder IFS.'},
+  {k:'FVG', a:['fvg','f v g','o c','oc','open close','fair value gap'], t:'FVG und O-C sind im aktuellen CBR-System nicht ausgeschrieben definiert. Im Decision Tree sind FVG oder O-C Voraussetzung für AOI OK. In der FS-Route werden AOIs über 3M FVG plus Open/Close bestimmt.'},
+  {k:'A+', a:['a plus','aplus','a+','a +'], t:'A-plus ist im Decision Tree ein Test-Gate und im System nicht genauer definiert. Im 15-Minuten-Modell erlaubt A-plus bei Timing über 50 Prozent die Confirmation TP3 oder IND, im 30-Minuten-Modell TP3 oder zweiter IND Shift beziehungsweise neue 15 Minuten.'},
+  {k:'Trade Type', a:['trade type','trade typ','pro','pro trade','counter','counter trade','countertrade','range trade'], t:'Pro, Range und Counter sind die Trade Types des Decision Trees. Range kommt aus der Ranging Range, Pro aus Clean Trend oder Normal TR, Counter nur aus Normal TR; Counter im Clean Trend ist No Trade. Jeder Typ hat eine eigene AOI-ER-Prüfung, Counter braucht External AOI, Structure und FVG oder O-C. Genauer ist der Typ im System nicht definiert.'},
+  {k:'Ranging Range', a:['ranging range','ranging','range','seitwärtsrange'], t:'Im Decision Tree braucht die Ranging Range ein Gegenleg beziehungsweise Leg von mindestens 75 Prozent und führt zum Trade Type Range. Eine genauere Definition enthält das System nicht.'},
+  {k:'Trending Range', a:['trending range','trending','trend range','normal tr','clean trend','tr'], t:'Im Decision Tree braucht die Trending Range externe Higher Highs und Higher Lows oder Lower Highs und Lower Lows. Zwei Corrections unter etwa 50 Prozent ergeben Clean Trend, sonst Normal TR. Eine genauere Definition enthält das System nicht.'},
+  {k:'RR', a:['rr','r r','risk reward','risikoverhältnis','crv'], t:'RR steht im Decision Tree an zwei Stellen: als Condition für Ranging Range und im Execution-Teil für Risk-Reward, das mindestens 0,7 sein muss.'},
+  {k:'Chase', a:['chase','chasing','jagen'], t:'Chase heißt laut Playbook, dem Preis nach einem bereits laufenden Move hinterherzuspringen, statt einen strukturierten Entry abzuwarten. Kein Chase. Im 15-Minuten-Tree führt zu weit oder HV5 Break zu Wait.'},
+  {k:'SL', a:['sl','s l','stop loss','external sl','stoploss'], t:'Laut Playbook gilt SL always external: Der Stop liegt hinter der relevanten externen Struktur, dort wo die Trade-Idee invalidiert ist. Niemals enger setzen für ein besseres Risk-Reward. Im Tree: SL nicht external ist No Trade.'},
+  {k:'TP', a:['tp','t p','take profit'], t:'Laut Playbook wird der TP strukturell gesetzt und realistisch gehalten, nicht über die zweite relevante 5-Sekunden-Struktur hinaus. Im Decision Tree gilt: TP maximal 2R plus Typ-Logik, sonst No Trade.'},
+  {k:'Entry', a:['entry','einstieg','market','market order','stop order'], t:'Laut Playbook kommt der Entry erst nach Condition, Where, OE, CB und Shift, bevorzugt im Pullback in die Shift-Struktur, kein Chase. In der Decision Map ist Market der Standard, Stop nur bei perfektem Setup.'},
+  {k:'Early Entry', a:['early entry','früher entry','frueher entry'], t:'Early Entry ist im Decision Tree ein Test-Gate: nur perfekt plus klare Umkehr, Counter braucht TP3. Er bestätigt nur die Entry-Confirmation. Condition Change, HV5, SL, RR und TP werden danach weiterhin geprüft.'},
+  {k:'FS / IFS', a:['fs','f s','ifs','i f s','fs ifs'], t:'FS und IFS sind die Route nach Big external 1M TP3 mit Condition Change. FS folgt der Shift-Richtung: Bull Long, Bear Short, 1-Minuten-Shift-Entry, SL external, AOIs 3M FVG plus Open/Close, TP nach Struktur. IFS ist die Korrektur: Bull bearishe Korrektur, Bear bullishe Korrektur, Orientierung etwa 50 Prozent. Die Langformen sind im System nicht ausgeschrieben.'},
+  {k:'Pullback', a:['pullback','pb','p b','start pb','start pullback','pull back'], t:'Im Decision Tree gilt: Ein Start-Pullback von 0 bis 20 Prozent bedeutet, die OE danach zu messen. Ein Pullback in der OE über 40 Prozent ist No Trade. Im 1-Stunden-Modell braucht es nach der Reaction einen Pullback von etwa 50 Prozent.'},
+  {k:'Wick', a:['wick','docht','wicks'], t:'Im Decision Tree ist ein Wick über 30 Prozent No Trade. Genauer ist Wick im System nicht definiert.'},
+  {k:'Wait', a:['wait','warten'], t:'Wait heißt: Das Setup ist nicht invalid, aber eine Bedingung oder Confirmation ist noch nicht da. Nur schwächere Confirmation führt zu stärkerer Confirmation. Mit erneut prüfen geht es zurück zum auslösenden Gate.'},
+  {k:'No Trade', a:['no trade','notrade','kein trade'], t:'No Trade heißt: Ein Pflichtkriterium ist invalid. Laut Playbook: Missing one core element = No Trade. Ein Shift rettet kein invalides Setup.'},
+  {k:'Final Gate', a:['final gate','pflicht gates','pflichtgates','checkliste'], t:'Das Final Gate ist die Pre-Trade-Checkliste direkt vor dem Entry. Nur wenn alle Pflicht-Gates erfüllt sind, gibt es Trade, sonst geht es zurück zum fehlenden Gate.'},
+  {k:'Timing', a:['timing'], t:'Laut Playbook ist das Timing ein Filter innerhalb eines bereits gültigen Setups, kein alleiniger Entry-Grund. Im 15-Minuten-Tree: unter 30 Prozent Wait, 30 bis 50 Prozent TP3, über 50 Prozent A-plus-Prüfung. Im 30- und 60-Minuten-Tree muss das Timing mindestens 30 Prozent sein.'},
+];
+
+/* =====================================================================
+   TEXT · NORMALISIERUNG · ZAHLEN
+   ===================================================================== */
+function norm(s){
+  return String(s||'').toLowerCase()
+    .replace(/(\d)[,.](\d)/g,'$1§$2')
+    .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+    .replace(/%/g,' prozent ')
+    .replace(/[^\p{L}\p{N}§+\s]/gu,' ')
+    .replace(/\+/g,' plus ')
+    .replace(/§/g,'.')
+    .replace(/\s+/g,' ').trim();
+}
+const NU = {null:0,eins:1,zwei:2,zwo:2,drei:3,vier:4,fuenf:5,sechs:6,sieben:7,acht:8,neun:9};
+const NT = {zehn:10,elf:11,zwoelf:12,dreizehn:13,vierzehn:14,fuenfzehn:15,sechzehn:16,siebzehn:17,achtzehn:18,neunzehn:19};
+const NX = {zwanzig:20,dreissig:30,vierzig:40,fuenfzig:50,sechzig:60,siebzig:70,achtzig:80,neunzig:90};
+function wordNum(w){
+  let base = 0, r = w, m;
+  if((m = r.match(/^(ein|zwei)?hundert(und)?(.*)$/))){ base = m[1]==='zwei' ? 200 : 100; r = m[3]; if(!r) return base; }
+  if(r in NT) return base + NT[r];
+  if(r in NX) return base + NX[r];
+  if((m = r.match(/^(ein|zwei|drei|vier|fuenf|sechs|sieben|acht|neun)und(zwanzig|dreissig|vierzig|fuenfzig|sechzig|siebzig|achtzig|neunzig)$/)))
+    return base + (m[1]==='ein' ? 1 : NU[m[1]]) + NX[m[2]];
+  if(r in NU) return base + NU[r];
+  if(base && r==='ein') return base + 1;
+  return null;
+}
+function numify(n){
+  const tk = n.split(' '), out = [];
+  for(let i=0;i<tk.length;i++){
+    let v = /^\d+(\.\d+)?$/.test(tk[i]) ? parseFloat(tk[i]) : wordNum(tk[i]);
+    if(v===null){ out.push(tk[i]); continue; }
+    if((tk[i+1]==='komma' || tk[i+1]==='punkt') && tk[i+2]!==undefined){
+      const w = tk[i+2], d = /^\d+$/.test(w) ? w : (wordNum(w)!==null && wordNum(w)<10 ? String(wordNum(w)) : null);
+      if(d!==null){ v = parseFloat(v + '.' + d); i += 2; }
+    }
+    out.push(String(v));
+  }
+  return out.join(' ');
+}
+const hasP = (n,p) => p && (' '+n+' ').includes(' '+p+' ');
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const FILL_RE = /^(?:(?:warte|warte mal|warte kurz|moment|moment mal|kurz|kurze frage|aehm|aeh|ehm|also|hm+|sag mal|bitte|na|nun)\s+)+/;
+function stripFill(n){ const r = n.replace(FILL_RE,'').trim(); return r || n; }
+
+// Text → sprechbar (nur sprachliche Formatierung)
+function speakify(t){
+  return String(t||'')
+    .replace(/<[^>]+>/g,'')
+    .replace(/\bRR\s*(?=[<>≥≤]\s*\d)/g,'Risk Reward ')
+    .replace(/(\d)\.\/(\d)\./g,'$1. und $2.')
+    .replace(/(\d)\.(\d)/g,'$1,$2')
+    .replace(/\bA\+/g,'A-plus')
+    .replace(/≥\s*/g,'mindestens ').replace(/≤\s*/g,'höchstens ')
+    .replace(/>\s*/g,'über ').replace(/<\s*/g,'unter ')
+    .replace(/(\d)\s*[–-]\s*(\d)/g,'$1 bis $2')
+    .replace(/%/g,' Prozent')
+    .replace(/\s*→\s*/g,', ').replace(/\s+[–—]\s+/g,', ').replace(/\s·\s/g,', ')
+    .replace(/\s\/\s/g,' oder ')
+    .replace(/\s\+\s/g,' plus ')
+    .replace(/\bHH\/HL\b/g,'Higher High und Higher Low').replace(/\bLH\/LL\b/g,'Lower High und Lower Low')
+    .replace(/\b15M\b/g,'15 Minuten').replace(/\b30M\b/g,'30 Minuten').replace(/\b1H\b/g,'eine Stunde').replace(/\b1M\b/g,'1-Minuten').replace(/\b3M\b/g,'3-Minuten')
+    .replace(/\b(\d)R\b/g,'$1 R')
+    .replace(/\bSL\b/g,'Stop Loss').replace(/\bPB\b/g,'Pullback')
+    .replace(/\s{2,}/g,' ').trim();
+}
+const STAGE_SPEECH = {'CONDITION':'Condition','TYPE':'Trade Type','1M TP3':'1-Minuten TP3','AOI / ER':'AOI und ER','OE / CB':'Overextension und Candle Behaviour','TIMING':'Timing','SHIFT':'Shift','ENTRY':'Entry','SL / TP':'Stop Loss und Take Profit','FINAL':'Final Gate','CONDITION NEU':'Condition neu','AOI NEU':'AOI neu','ER NEU':'ER neu','FS / IFS':'FS oder IFS'};
+const TF_SPEECH = {'15M':'15-Minuten','30M':'30-Minuten','1H':'1-Stunden','FSIFS':'FS- oder IFS'};
+const VALUE_SPEECH = {'RR':'Ranging Range','TR':'Trending Range','Normal TR':'Normal Trending Range','TR · Clean Trend':'Trending Range, Clean Trend'};
+
+/* =====================================================================
+   ENGINE-ZUGRIFF (nur lesend)
+   ===================================================================== */
+function currentOptions(){
+  if(!S) return [];
+  if(S.result) return resultOptions();
+  return optionsFor(T().nodes[S.node]);
+}
+function engineKey(){
+  if(!S) return 'start';
+  return [S.tree, S.node, S.result ? S.result.type + '@' + (S.result.from||'') : '', S.hist.length, S.trace.length].join('|');
+}
+function stageNow(){ return S ? curStage() : ''; }
+
+/* =====================================================================
+   FRAGEN NATÜRLICH VORLESEN  (nur Sprache – Bedeutung identisch zu node.q)
+   ===================================================================== */
+const FVG_Q = 'Haben wir ein FVG oder O-C?';
+const SPEAK_Q = {
+  legs:'Haben wir zwei klare, ähnliche und relevante Legs?',
+  noise:n => n.q.startsWith('Interner') ? 'Haben wir internen Noise oder erzwungene Legs?'
+           : n.q.includes('1H') ? 'Werden kleine interne Swings als 1H-Legs gezählt?' : 'Werden kleine interne Swings als Legs gezählt?',
+  cond:'Welche Condition haben wir?',
+  rr_leg:n => n.q.startsWith('Gegenleg') ? 'Ist das Gegenleg mindestens 75 Prozent?' : 'Ist das Leg mindestens 75 Prozent?',
+  tr_ext:'Haben wir externe Higher Highs und Higher Lows, beziehungsweise Lower Highs und Lower Lows?',
+  corr:'Haben wir zwei Corrections von ungefähr unter 50 Prozent?',
+  clean:'Clean Trend: Ist es ein Counter?',
+  type_sel:'Welchen Trade Type haben wir?',
+  big:'Haben wir einen Big 1-Minuten TP3 mit Condition Change?',
+  pro_er:'Pro Trade. Wie hoch ist das ER?',
+  pro_fvg:FVG_Q, range_fvg:FVG_Q, cnt_fvg:FVG_Q,
+  range_er:'Range Trade. Liegt das ER zwischen 75 und 120 Prozent?',
+  cnt_ext:'Counter Trade. Haben wir eine External AOI?',
+  cnt_struct:'Haben wir Structure?',
+  oe30:'Ist die Overextension mindestens 30 Prozent?',
+  startpb:'Liegt der Start-Pullback zwischen 0 und 20 Prozent?',
+  pb40:'Ist der Pullback innerhalb der Overextension größer als 40 Prozent?',
+  manypb:'Haben wir viele kleine Pullbacks?',
+  wick:'Ist der Wick größer als 30 Prozent?',
+  t15:'Wie hoch ist das Timing?',
+  aplus:'Timing über 50 Prozent. Ist es ein A-plus Setup?',
+  early:(n,s) => `Geforderte Confirmation ist ${s.conf||'nicht gesetzt'}. Ist ein Early Entry valide?`,
+  conf_da:(n,s) => `Gefordert ist ${s.conf||'die Confirmation'}. Ist die geforderte Confirmation da?`,
+  cc15:'Haben wir einen Condition Change?', cc30:'Haben wir einen Condition Change?',
+  hv5:'Ist der Preis zu weit gelaufen oder haben wir einen HV5 Break?',
+  entry:'Entry ready. Welche Order nehmen wir?',
+  sl:'Ist der Stop Loss external?',
+  rr:'Ist das Risk-Reward mindestens 0,7?',
+  tp:'Ist der Take Profit maximal 2R und ist die Typ-Logik erfüllt?',
+  final:'Final Gate. Sind alle Pflicht-Gates erfüllt? Ja für Trade, nein wenn ein Gate fehlt.',
+  final_fail:'Welches Gate fehlt? Du kannst auch die Nummer sagen.',
+  t30:'Ist das Timing mindestens 30 Prozent?', t1h:'Ist das Timing mindestens 30 Prozent?',
+  aplus30:'Ist es ein A-plus Setup?',
+  shift1:(n,s) => `Required Confirmation ist ${s.conf||'gesetzt'}. Beim ersten Shift: Sind Condition, AOI, OE und Candle Behaviour valide?`,
+  hv5_30:'Bricht der HV5 den ersten Shift?',
+  shift2:'Nach dem zweiten Shift: Ist der Shift valide und hält er?',
+  tp3_1h:'Haben wir einen 1-Minuten TP3?',
+  extbreak:'Haben wir einen External Break mit Condition Change?',
+  reaction:'Haben wir eine Reaction?',
+  pb50:'Haben wir einen Pullback von ungefähr 50 Prozent?',
+  shiftind:'Haben wir einen Shift Indicator?',
+  fs_cc:'Big external 1-Minuten TP3. Haben wir einen Condition Change?',
+  fs_cond:'Wie ist die neue Condition?',
+  fs_aoi:'Neue AOI markieren. Sag gesetzt, sobald die neue AOI steht.',
+  fs_er:'ER neu messen. Sag gemessen, sobald das neue ER steht.',
+};
+function getSpeakableQuestion(node, state, id){
+  if(!node) return '';
+  id = id || (S && T().nodes[S.node]===node ? S.node : null);
+  const f = SPEAK_Q[id];
+  let q = typeof f==='function' ? f(node, state||{}) : f;
+  if(!q) q = fill(node.q, state||{});
+  return speakify(q);
+}
+const LABEL_SPEECH = {RR:'Ranging Range',TR:'Trending Range','NICHT BESTIMMBAR':'nicht bestimmbar',PRO:'Pro',COUNTER:'Counter',
+  MARKET:'Market',STOP:'Stop',BULL:'Bull',BEAR:'Bear','KEIN SHIFT':'kein Shift','ERNEUT PRÜFEN':'erneut prüfen','ZURÜCK':'zurück',
+  'NEUER TRADE':'neuer Trade','FS STARTEN':'FS','IFS STARTEN':'IFS','TRADE ABBRECHEN':'Trade abbrechen','AOI NEU GESETZT':'gesetzt',
+  'ER NEU GEMESSEN':'gemessen',JA:'ja',NEIN:'nein','15M':'15 Minuten','30M':'30 Minuten','1H':'eine Stunde'};
+function spokenLabel(o){
+  if(LABEL_SPEECH[o.t]) return LABEL_SPEECH[o.t];
+  return speakify(String(o.t).replace(/\s\/\s/g,' und '));
+}
+function joinOr(words){ return words.length>1 ? words.slice(0,-1).join(', ') + ' oder ' + words[words.length-1] : (words[0]||''); }
+function optionsSpeech(opts){
+  const L = opts.map(o=>o.t);
+  if(L.length<2 || (L.length===2 && L.includes('JA') && L.includes('NEIN'))) return '';
+  const list = joinOr(opts.map(spokenLabel));
+  if(L.includes('JA')) return ' Antworte mit ' + list + '.';
+  return ' ' + cap(list) + '?';
+}
+function resultSpeech(r){
+  switch(r.type){
+    case 'TRADE': return 'Trade freigegeben. Alle Pflicht-Gates sind erfüllt. Möchtest du einen neuen Trade starten oder den aktuellen Trade zusammenfassen?';
+    case 'NO': return `No Trade. Das fehlgeschlagene Gate ist: ${r.gate}. Möchtest du zurück oder einen neuen Trade starten?`;
+    case 'WAIT': return `Wait. ${r.wait} Sag erneut prüfen, sobald sich der Markt verändert hat.`;
+    case 'FS': return 'Condition Change erkannt. Der alte CBR ist beendet. Möchtest du FS oder IFS starten?';
+    case 'REVIEW': return 'Dieser Pfad ist im aktuellen Decision Map nicht eindeutig definiert. Regel prüfen. Du kannst zurück sagen oder den Trade abbrechen.';
+    case 'NORMAL': return 'Kein Condition Change. Weiter im normalen CBR. Welchen Timeframe? 15 Minuten, 30 Minuten oder eine Stunde?';
+    case 'PLAN': {
+      const rows = [...document.querySelectorAll('#center .plan > div')].map(d => {
+        const k = d.querySelector('span'), v = d.querySelector('b'); return k && v ? `${k.textContent}: ${v.textContent}.` : '';
+      }).join(' ');
+      const big = document.querySelector('#center .res .big');
+      return `${big ? big.textContent.trim() : ''} Plan. ${rows} Option, Test: Früher Entry nur wenn Shift-Aufbau klar. Sag neuer Trade, um zur Timeframe-Auswahl zu gehen.`;
+    }
+  }
+  return '';
+}
+const TF_PROMPT = 'Bereit. Welchen Timeframe möchtest du prüfen? 15 Minuten, 30 Minuten, eine Stunde oder FS oder IFS?';
+function promptText(){
+  if(!S) return TF_PROMPT;
+  if(S.result) return resultSpeech(S.result);
+  const n = T().nodes[S.node];
+  return getSpeakableQuestion(n, S.state, S.node) + optionsSpeech(optionsFor(n));
+}
+function reaskText(){
+  if(!S || S.result) return promptText();
+  const opts = currentOptions(), L = opts.map(o=>o.t);
+  let s = promptText();
+  if(L.length===2 && L.includes('JA') && L.includes('NEIN')) s += ' Bitte mit ja oder nein antworten.';
+  return s;
+}
+function resumePrefix(){ return !S ? 'Zurück zur Auswahl.' : S.result ? 'Zurück zum Ergebnis.' : 'Zurück zur Prüfung.'; }
+
+/* =====================================================================
+   ANTWORT-MATCHING  (nur gegen die aktuell sichtbaren Optionen)
+   ===================================================================== */
+const RAW_SYN = {
+  'JA':['ja','jap','jo','jawohl','yes','yep','korrekt','stimmt','haben wir','richtig','genau','trifft zu','positiv','ist so','vorhanden','ist vorhanden','bestätigt','passt','check','sicher'],
+  'NEIN':['nein','nee','ne','nö','noe','no','nope','haben wir nicht','trifft nicht zu','negativ','nicht vorhanden','nicht','kein','keine','keinen','gar nicht'],
+  'RR':['rr','r r','ranging range','ranging','range','seitwärtsrange','seitwärts range','seitwärts'],
+  'TR':['tr','t r','trending range','trend range','trending','trendrange','trend'],
+  'NICHT BESTIMMBAR':['nicht bestimmbar','unklar','keine klare condition','keine condition','weder noch','nicht klar','unbestimmt'],
+  'PRO':['pro','pro trade','protrade'],
+  'COUNTER':['counter','counter trade','countertrade','gegen den trend','konter'],
+  'MARKET':['market','market order','marktorder','markt order','markt','direkt rein','sofort rein'],
+  'STOP':['stop','stopp','stop order','stopp order','pending stop'],
+  'BULL':['bull','bullish','bullisch','bulle','bullen'],
+  'BEAR':['bear','bearish','bärisch','bär','baer','bären'],
+  'KEIN SHIFT':['kein shift','noch kein shift','shift noch nicht da','noch nicht da','kein erster shift','erster shift fehlt'],
+  'ERNEUT PRÜFEN':['erneut prüfen','nochmal prüfen','noch mal prüfen','neu prüfen','prüfen','erneut','recheck','wieder prüfen','erneut checken'],
+  'ZURÜCK':['zurück','geh zurück','einen schritt zurück','back'],
+  'NEUER TRADE':['neuer trade','neuen trade','nächster trade','nächsten trade','neu starten','new trade','von vorne'],
+  'FS STARTEN':['fs','f s','fs starten','eff es'],
+  'IFS STARTEN':['ifs','i f s','ifs starten','i fs'],
+  'TRADE ABBRECHEN':['trade abbrechen','abbrechen','abbruch'],
+  'AOI NEU GESETZT':['gesetzt','aoi gesetzt','aoi neu gesetzt','fertig','erledigt','ja','done','steht','markiert'],
+  'ER NEU GEMESSEN':['gemessen','er gemessen','er neu gemessen','fertig','erledigt','ja','done','steht'],
+};
+const SYN = {}; for(const k in RAW_SYN) SYN[k] = RAW_SYN[k].map(norm);
+const YES_PH = SYN['JA'].filter(p => p!=='vorhanden'), NO_PH = SYN['NEIN'];
+const TF_LABELS = new Set(['15M','30M','1H']);
+const LABEL_STOP = new Set(['no','und','oder','plus','mit','der','die','das','ok']);
+
+function polarity(n){
+  const yes = YES_PH.some(p => hasP(n,p)), no = NO_PH.some(p => hasP(n,p));
+  if(yes && !no) return 'yes';
+  if(no && !yes) return 'no';
+  if(yes && no){
+    if(/\b(stimmt|korrekt|richtig|haben wir|trifft|ist) (leider )?nicht\b/.test(n) || /^(nein|nee|noe|no|nope)\b/.test(n)) return 'no';
+    if(/^(ja|jap|jo|jawohl|yes|yep|genau|richtig|korrekt)\b/.test(n) && !/\b(nein|nee|noe)\b/.test(n)) return 'yes';
+    return 'ambiguous';
+  }
+  return null;
+}
+function matchTimeframe(n, nn){
+  const h = re => re.test(nn) || re.test(n);
+  const c = [
+    h(/\b(fs|ifs|f s|i f s|condition change|condition change route)\b/) && 'FSIFS',
+    h(/\b(stunde|stunden|stundenchart|1 h|1h|60 minuten|hour)\b/) && '1H',
+    h(/\b(30|30 m|30m|dreissig)\b/) && '30M',
+    h(/\b(15|15 m|15m|fuenfzehn)\b/) && '15M',
+  ].filter(Boolean);
+  return c.length===1 ? c[0] : null;
+}
+function parseSpec(t){
+  const s = String(t).replace(/\s/g,''); let m;
+  if((m = s.match(/^([\d.]+)[–-]([\d.]+)%$/))) return {k:'rng', a:+m[1], b:+m[2]};
+  if((m = s.match(/^<([\d.]+)%$/))) return {k:'lt', a:+m[1]};
+  if((m = s.match(/^>([\d.]+)%$/))) return {k:'gt', a:+m[1]};
+  if((m = s.match(/^≥([\d.]+)%$/))) return {k:'ge', a:+m[1]};
+  if((m = s.match(/^≤([\d.]+)%$/))) return {k:'le', a:+m[1]};
+  return null;
+}
+function matchPercent(opts, nn){
+  const specs = opts.map(o => parseSpec(o.t));
+  if(!specs.some(Boolean)) return {index:null};
+  const nums = (nn.match(/\d+(?:\.\d+)?/g)||[]).map(Number);
+  if(!nums.length) return {index:null};
+  const eq = (x,y) => Math.abs(x-y) < 0.05;
+  const idx = f => specs.map((s,i) => s && f(s) ? i : -1).filter(i => i>=0);
+  const uniq = arr => arr.length===1 ? {index:arr[0]} : {index:null, ambiguous:arr.length>1};
+  const classify = x => uniq(idx(s => {
+    switch(s.k){
+      case 'lt': return x < s.a;
+      case 'le': return x <= s.a;
+      case 'gt': return x > s.a;
+      case 'ge': return x >= s.a;
+      case 'rng': {
+        const upEx = specs.some(o => o && o.k==='ge' && eq(o.a, s.b));
+        const loEx = specs.some(o => o && o.k==='le' && eq(o.a, s.a));
+        return (loEx ? x > s.a : x >= s.a) && (upEx ? x < s.b : x <= s.b);
+      }
+    }
+    return false;
+  }));
+  if(nums.length>=2) return uniq(idx(s => s.k==='rng' && eq(s.a,nums[0]) && eq(s.b,nums[1])));
+  const v = nums[0];
+  if(/\b(unter|unterhalb|weniger|kleiner|drunter|below)\b/.test(nn)){ const d = idx(s => s.k==='lt' && eq(s.a,v)); return d.length ? uniq(d) : classify(v - 1e-6); }
+  if(/\b(ueber|oberhalb|mehr|groesser|drueber|above)\b/.test(nn)){ const d = idx(s => (s.k==='gt'||s.k==='ge') && eq(s.a,v)); return d.length ? uniq(d) : classify(v + 1e-6); }
+  if(/\b(mindestens|ab|wenigstens|minimum)\b/.test(nn)){ const d = idx(s => (s.k==='ge'||s.k==='gt') && eq(s.a,v)); return d.length ? uniq(d) : classify(v); }
+  return classify(v);
+}
+const ORD = {erste:0,ersten:0,erster:0,erstes:0,zweite:1,zweiten:1,zweiter:1,dritte:2,dritten:2,dritter:2,vierte:3,vierten:3,fuenfte:4,sechste:5,siebte:6,achte:7,neunte:8};
+function ordinal(nn){
+  let m = nn.match(/^(?:die |der |das )?(?:option|nummer|antwort|taste|punkt) (\d+)$/);
+  if(m) return parseInt(m[1],10) - 1;
+  m = nn.match(/^(?:die |der |das )?(\S+)(?: option| antwort)?$/);
+  if(m && m[1] in ORD) return ORD[m[1]];
+  return null;
+}
+function phraseScore(o, n, nn, isList){
+  if(TF_LABELS.has(o.t)) return matchTimeframe(n, nn)===o.t ? 20 : 0;
+  const cands = new Set([...(SYN[o.t]||[]), norm(o.t), norm(spokenLabel(o))]);
+  if(o.s && !String(o.s).trim().startsWith('→')) cands.add(norm(o.s));
+  if(isList) norm(o.t).split(' ').filter(w => w.length>1 && !LABEL_STOP.has(w)).forEach(w => cands.add(w));
+  let best = 0;
+  cands.forEach(p => { if(p && (hasP(n,p) || hasP(nn,p)) && p.length>best) best = p.length; });
+  return best;
+}
+function matchOne(text, opts, isList){
+  const n = stripFill(norm(text)), nn = numify(n);
+  if(!n) return {index:null};
+  const ord = ordinal(nn);
+  if(ord!==null && ord>=0 && ord<opts.length) return {index:ord};
+  const pm = matchPercent(opts, nn);
+  if(pm.index!==null || pm.ambiguous) return pm;
+  let best = -1, bestLen = 0, tie = false;
+  opts.forEach((o,i) => {
+    const L = phraseScore(o, n, nn, isList);
+    if(L>bestLen){ best = i; bestLen = L; tie = false; }
+    else if(L>0 && L===bestLen) tie = true;
+  });
+  const iJa = opts.findIndex(o => o.t==='JA'), iNein = opts.findIndex(o => o.t==='NEIN');
+  if(iJa>=0 && iNein>=0 && (best===iJa || best===iNein || best<0)){
+    const p = polarity(n);
+    if(p==='yes') return {index:iJa};
+    if(p==='no') return {index:iNein};
+    if(p==='ambiguous') return {index:null, ambiguous:true};
+  }
+  if(best>=0 && !tie) return {index:best};
+  return {index:null, ambiguous:tie};
+}
+// Zentrale Matching-Funktion: eindeutiger Index der AKTUELL sichtbaren Option oder null
+function matchCurrentOption(transcript){
+  const alts = Array.isArray(transcript) ? transcript : [transcript];
+  const opts = currentOptions();
+  if(!opts.length) return {index:null};
+  const isList = !!(S && !S.result && T().nodes[S.node].kind==='failsel');
+  let amb = false;
+  for(const a of alts){
+    const r = matchOne(a, opts, isList);
+    if(r.index!==null) return {index:r.index, label:opts[r.index].t};
+    if(r.ambiguous) amb = true;
+  }
+  return {index:null, ambiguous:amb};
+}
+
+/* =====================================================================
+   INTENT ROUTER
+   ===================================================================== */
+const CMD = [
+  ['VOICE_OFF', /\b(cbr aus|voice aus|stand ?by|stop listening|sprachsteuerung aus)\b/],
+  ['HOME',      /\b(timeframe wechseln|zurueck zur auswahl|startseite|zur startseite|anderen timeframe|timeframe aendern)\b/],
+  ['RESET',     /\b(trade resetten|reset trade|trade zuruecksetzen|trade reset|reset|zuruecksetzen)\b/],
+  ['NEW',       /\b(neuer trade|neuen trade|naechsten trade|naechster trade|new trade)\b/],
+  ['MAP_CLOSE', /\b(map schliessen|karte schliessen|regeln schliessen|schliessen|schliess|zumachen)\b/],
+  ['MAP',       /\b(map|zeig die map|decision map|karte)\b/],
+  ['INFO',      /\b(regel ?info|info|erklaer dieses gate|erklaere dieses gate|gate info)\b/],
+  ['RULES',     /\b(regeln|regeluebersicht|zeig regeln|rules|kernregeln)\b/],
+  ['REPEAT',    /\b(frage wiederholen|wiederhol(?:en|e)?|nochmal bitte|noch mal bitte|was war die frage|sag nochmal|sag das nochmal)\b/],
+  ['OPTIONS',   /\b(welche optionen|optionen|was kann ich sagen|antwortmoeglichkeiten|welche antworten|was kann ich antworten)\b/],
+  ['DETAIL',    /\b(erklaer genauer|erklaere genauer|genauer bitte|mehr details|ausfuehrlicher)\b/],
+  ['SUMMARY',   /\b(zusammenfassen|zusammenfassung|fass zusammen)\b/],
+  ['BACK',      /\b(zurueck|letzte antwort aendern|back|rueckgaengig)\b/],
+];
+const NAV_CMDS = new Set(['HOME','BACK','MAP','MAP_CLOSE','RULES','NEW','RESET']);
+const ADVICE = /(\bsieht\b.*\baus\b|\bwuerdest du\b|\bwas wuerdest\b|\bsoll ich\b|\bsollte ich\b|\bmeinst du\b|\bdenkst du\b|\bglaubst du\b|\bempfiehlst\b|\bempfehlung\b|\bdeine meinung\b|\bnimmst du\b|\bwas sagst du\b|\bwie siehst du\b|\blohnt sich\b|\bist das ein guter\b)/;
+const Q_START = /^(warum|wieso|weshalb|wozu|was|wie|welche|welcher|welches|welchen|wo|wann|erklaer|erklaere|kannst du|koenntest du|kann man|sag mir|ist das|bedeutet|definier)\b/;
+const Q_ANY = /\b(warum|wieso|weshalb|wozu|was bedeutet|was heisst|was ist|was sind|wo stehen wir|was fehlt|was kommt|erklaer mir|erklaere mir)\b/;
+function isQuestion(n, raw){ return Q_START.test(n) || Q_ANY.test(n) || /\?\s*$/.test(raw||''); }
+const WAKE_RE = /^(?:(?:hey|hei|hay|he|hi|hallo|ok|okay)\s+)?(?:c\s?b\s?r|cbr|zbr|z b r|ce be er|zeh be er|tse be er|cebeer|c b are|cbr s)\b\s*/;
+const WAKE_RE_HEY = /^(?:hey|hei|hay|hallo)\s+(?:zebra|seebar|cb are)\b\s*/;
+function stripWake(n){
+  let m = n.match(WAKE_RE) || n.match(WAKE_RE_HEY);
+  if(!m) return null;
+  return n.slice(m[0].length).trim();
+}
+
+// reine Klassifikation – keine Seiteneffekte
+function classifyIntent(input){
+  const alts = (Array.isArray(input) ? input : [input]).filter(Boolean);
+  const raw = alts[0] || '';
+  const n = stripFill(norm(raw)), nn = numify(n);
+  if(!n) return {intent:'UNKNOWN'};
+  // 1. Sicherheitsbestätigung
+  if(V.pending && V.pending.type==='confirm') return {intent:'CONFIRMATION', value:polarity(n) || (/\babbrechen\b/.test(n) ? 'no' : null)};
+  if(V.pending && V.pending.type==='resume'){
+    if(/\b(fortsetzen|weiter|weitermachen|fortfahren|ja)\b/.test(n)) return {intent:'CONFIRMATION', value:'resume'};
+    if(/\b(neu|neuer|neuen|nein|verwerfen)\b/.test(n)) return {intent:'CONFIRMATION', value:'new'};
+  }
+  // 2. globale Navigation / Befehle
+  for(const [name, re] of CMD) if(re.test(n)) return {intent: NAV_CMDS.has(name) ? 'NAVIGATION' : 'GLOBAL_COMMAND', command:name};
+  // Bitte um Tradingentscheidung → nie beantworten, nur erklären
+  if(ADVICE.test(n)) return {intent:'QUESTION', kind:'advice'};
+  // Timeframe-Auswahl (Startseite)
+  if(!S){ const tf = matchTimeframe(n, nn); if(tf) return {intent:'NAVIGATION', command:'TIMEFRAME', tf}; }
+  // 3. eindeutige aktuelle Option – nie, wenn der Satz klar eine Frage ist
+  const q = isQuestion(n, raw);
+  if(!q && S){
+    const m = matchCurrentOption(alts);
+    if(m.index!==null) return {intent:'ANSWER_OPTION', index:m.index, label:m.label};
+    if(m.ambiguous) return {intent:'UNKNOWN', ambiguous:true};
+  }
+  // 4. Frage / Erklärung
+  if(q) return {intent:'QUESTION'};
+  return {intent:'UNKNOWN'};
+}
+
+function routeVoiceIntent(input){
+  const alts = (Array.isArray(input) ? input : [input]).filter(Boolean);
+  const c = classifyIntent(alts);
+  log('intent', c, alts[0]);
+  switch(c.intent){
+    case 'CONFIRMATION': onConfirmation(c.value); break;
+    case 'NAVIGATION':
+    case 'GLOBAL_COMMAND': touch(); runCommand(c); break;
+    case 'ANSWER_OPTION':
+      if(Date.now() < V.lockUntil){ log('answer lock – ignoriert'); break; }   // nie zweimal choose() für dieselbe Äußerung
+      touch(); executeOption(c.index); break;
+    case 'QUESTION': touch(); c.kind==='advice' ? speak(adviceRefusal(alts[0])) : handleQuestion(alts[0]); break;
+    default: onUnknown(c);
+  }
+  return c;
+}
+
+/* =====================================================================
+   AUSFÜHRUNG  (ausschließlich bestehende Engine-Funktionen)
+   ===================================================================== */
+function syncAndSpeak(prefix){
+  V.lastKey = engineKey();
+  return speak(((prefix||'') + ' ' + promptText()).trim());
+}
+function executeOption(i){
+  const opts = currentOptions(), o = opts[i];
+  if(!o) return;
+  const isResult = !!(S && S.result);
+  const ack = (CBR_VOICE_CONFIG.confirmAnswers && !isResult) ? cap(spokenLabel(o)) + '.' : '';
+  V.lockUntil = Date.now() + CBR_VOICE_CONFIG.answerLock;
+  choose(i);                       // ← exakt ein Engine-Aufruf pro erkannter Antwort
+  syncAndSpeak(ack);
+}
+function startTimeframe(tf){
+  V.lockUntil = Date.now() + CBR_VOICE_CONFIG.answerLock;
+  startTree(tf);
+  syncAndSpeak(tf==='FSIFS' ? 'FS oder IFS Route.' : cap(LABEL_SPEECH[tf]) + '.');
+}
+function askConfirm(text, onYes){
+  V.pending = {type:'confirm', text, onYes};
+  refreshStatus();
+  return speak(text);
+}
+function onConfirmation(value){
+  const p = V.pending;
+  if(!p) return;
+  if(p.type==='resume'){
+    V.pending = null; touch();
+    if(value==='resume'){
+      if(!S){ const d = load(); if(d && d.S){ const b = $('resumeBtn'); if(b) b.click(); } }
+      return syncAndSpeak('Wir machen weiter.');
+    }
+    return askConfirm('Offenen Trade verwerfen und einen neuen Trade starten?', () => { home(); syncAndSpeak(''); });
+  }
+  if(value==='yes'){ V.pending = null; touch(); refreshStatus(); p.onYes(); return; }
+  if(value==='no'){ V.pending = null; touch(); refreshStatus(); speak('Okay, nichts geändert. ' + promptText()); return; }
+  speak('Bitte mit ja oder nein bestätigen. ' + p.text);
+}
+function runCommand(c){
+  switch(c.command){
+    case 'TIMEFRAME': if(Date.now() < V.lockUntil) return; return startTimeframe(c.tf);
+    case 'VOICE_OFF': return goStandby(true);
+    case 'REPEAT': return speak(reaskText());
+    case 'OPTIONS': return speak(optionsText());
+    case 'SUMMARY': return speak(summaryText() + ' ' + resumePrefix() + ' ' + promptText());
+    case 'DETAIL': return handleDetail();
+    case 'MAP':
+      if(!S) return speak('Die Decision Map ist im laufenden Trade verfügbar. ' + TF_PROMPT);
+      openOv('mapOv'); return speak('Decision Map geöffnet. Sag schließen, um zurückzukehren.');
+    case 'MAP_CLOSE': closeOv(); return speak('Geschlossen. ' + promptText());
+    case 'RULES':
+      openOv('rulesOv');
+      return speak('Kernregeln. Eins: Shift bestätigt valide Setups, er rettet kein invalides Setup. Zwei: Pflichtkriterium invalid ist No Trade; nur bei schwächerer Confirmation wird auf stärkere Confirmation gewartet. Drei: Big external 1-Minuten TP3 plus Condition Change beendet den alten CBR, neu über FS oder IFS. Sag schließen, um zurückzukehren.');
+    case 'INFO': {
+      if(!S || S.result) return speak(STAGE_RULE[stageNow()] ? STAGE_RULE[stageNow()] + ' ' + promptText() : promptText());
+      const n = T().nodes[S.node];
+      if(n.info){ if(!infoOpen) toggleInfo(); return speak('Regel-Info: ' + n.info + ' Zurück zur Prüfung. ' + promptText()); }
+      return speak('Für dieses Gate gibt es keine zusätzliche Regel-Info. ' + (STAGE_RULE[n.stage]||'') + ' Zurück zur Prüfung. ' + promptText());
+    }
+    case 'BACK':
+      if(!S) return speak(TF_PROMPT);
+      if(!S.hist.length) return speak('Wir sind bereits beim ersten Schritt. ' + promptText());
+      back(); return syncAndSpeak('Zurück.');
+    case 'HOME':
+      if(S && S.hist.length) return askConfirm('Laufenden Trade verlassen und zur Timeframe-Auswahl wechseln?', () => { home(); syncAndSpeak(''); });
+      home(); return syncAndSpeak('');
+    case 'RESET':
+      if(!S) return speak(TF_PROMPT);
+      return askConfirm('Trade wirklich zurücksetzen?', () => { resetTrade(); syncAndSpeak('Trade zurückgesetzt.'); });
+    case 'NEW': {
+      if(!S) return speak(TF_PROMPT);
+      if(S.result){ const i = resultOptions().findIndex(o => o.t==='NEUER TRADE'); if(i>=0) return executeOption(i); }
+      return askConfirm('Laufenden Trade verwerfen und einen neuen Trade starten?', () => { resetTrade(); syncAndSpeak('Neuer Trade.'); });
+    }
+  }
+}
+function onUnknown(c){
+  if(V.pending && V.pending.type==='resume') return speak('Bitte sag fortsetzen oder neuer Trade.');
+  if(!S) return speak('Das habe ich nicht verstanden. ' + TF_PROMPT);
+  return speak((c && c.ambiguous ? 'Das war nicht eindeutig. ' : 'Das habe ich nicht verstanden. ') + reaskText());
+}
+
+/* =====================================================================
+   QUESTION & ANSWER  (lokal zuerst, KI nur zur Erklärung)
+   ===================================================================== */
+function optionsText(){
+  if(!S) return 'Du kannst 15 Minuten, 30 Minuten, eine Stunde oder FS oder IFS sagen.';
+  const opts = currentOptions();
+  return 'Mögliche Antworten: ' + joinOr(opts.map(spokenLabel)) + '.';
+}
+function summaryText(){
+  if(!S) return 'Es läuft noch kein Trade.';
+  const st = S.state, F = [['cond','Condition'],['type','Trade Type'],['er','ER'],['aoi','AOI'],['oe','OE'],['cb','Candle Behaviour'],['timing','Timing'],
+    ['conf','Confirmation'],['shift','Shift'],['order','Order'],['sl','Stop Loss'],['rr','Risk-Reward'],['tp','Take Profit'],['route','Route'],['ncond','neue Condition']];
+  const parts = F.filter(([k]) => st[k]).map(([k,l]) => `${l} ${VALUE_SPEECH[st[k]] || st[k]}`);
+  let s = parts.length ? 'Bisher: ' + parts.join(', ') + '.' : 'Bisher ist noch nichts ausgewählt.';
+  if(S.result){
+    const r = S.result;
+    s += ' Ergebnis: ' + ({TRADE:'Trade freigegeben.', NO:'No Trade, Failed Gate ' + r.gate + '.', WAIT:'Wait, ' + r.wait, FS:'FS oder IFS.', REVIEW:'Regel prüfen.', NORMAL:'normaler CBR.', PLAN:'FS oder IFS Plan.'}[r.type] || '');
+  }
+  return s;
+}
+function outcomeText(o){
+  if(o.result){
+    const r = o.result;
+    return {NO:'NO TRADE (Failed Gate: ' + r.gate + ')', WAIT:'WAIT (' + r.wait + ')', FS:'STOP → FS / IFS (alter CBR beendet)', REVIEW:'REGEL PRÜFEN (Pfad nicht eindeutig definiert)', TRADE:'TRADE', NORMAL:'NORMALER CBR'}[r.type] || r.type;
+  }
+  if(o.jump) return 'zurück zum Gate';
+  if(o.next){
+    const tn = T().nodes[o.next];
+    if(!tn) return o.next;
+    if(tn.route) return o.next==='aoi' ? '→ AOI / ER nach Trade Type' : '→ FS / IFS Plan';
+    if(tn.terminal) return '→ FS / IFS Plan';
+    return '→ ' + fill(tn.q, {}).replace(/\{\w+\}/g,'…');
+  }
+  return '';
+}
+function stripTags(s){ return String(s||'').replace(/<[^>]+>/g,''); }
+function treeOutline(tf){
+  const tree = TREES[tf]; if(!tree) return [];
+  return Object.values(tree.nodes).filter(n => n.options && n.stage).map(n =>
+    `[${n.stage}] ${fill(n.q,{}).replace(/\{\w+\}/g,'…')}${n.test?' (TEST)':''} :: ` + n.options.map(o => `${o.t} ${outcomeText(o)}`).join(' | '));
+}
+function glossaryFor(text){
+  const t = ' ' + norm(text) + ' ';
+  return GLOSSARY.filter(g => g.a.some(a => a.length>2 && t.includes(' ' + norm(a) + ' '))).map(g => ({term:g.k, text:g.t}));
+}
+function findTerm(phrase){
+  const p = norm(phrase).replace(/^(ein|eine|einen|der|die|das|den|dem|unter|mit|eigentlich|genau|nochmal)\s+/,'').replace(/\s+(eigentlich|genau|nochmal|hier|denn|bitte)$/,'').trim();
+  let best = null, bestLen = 0;
+  for(const g of GLOSSARY) for(const a0 of g.a){
+    const a = norm(a0);
+    if(p===a) return g;
+    if(a.length>2 && hasP(p,a) && a.length>bestLen){ best = g; bestLen = a.length; }
+  }
+  return best;
+}
+function curNode(){ return S && !S.result ? T().nodes[S.node] : null; }
+function localAnswer(n, nn){
+  const node = curNode(), st = S ? S.state : {};
+  if(/\b(wo stehen wir|wo sind wir|an welcher stelle|welcher schritt|aktueller stand|wo bin ich)\b/.test(n)){
+    if(!S) return 'Wir sind auf der Startseite. Es läuft noch kein Trade.';
+    const tf = S.tree==='FSIFS' ? 'in der FS- oder IFS-Route' : `im ${TF_SPEECH[S.tree]}-Modell`;
+    const stage = STAGE_SPEECH[stageNow()] || stageNow();
+    const now = S.result ? 'Ergebnis: ' + resultSpeech(S.result).split('.')[0] + '.' : 'Aktuell prüfen wir: ' + getSpeakableQuestion(node, st, S.node);
+    return `Wir sind ${tf}, Stage ${stage}. ${now}`;
+  }
+  if(/\b(was haben wir bisher|bisher ausgewaehlt|was haben wir ausgewaehlt|was haben wir bis jetzt|bisheriger stand|trade state)\b/.test(n)) return summaryText();
+  if(/\b(letzte (antwort|entscheidung|auswahl)|was war (meine|die) letzte|zuletzt (gewaehlt|gesagt|ausgewaehlt))\b/.test(n)){
+    if(!S || !S.trace.length) return 'Es gibt noch keine Entscheidung.';
+    return 'Deine letzte Entscheidung war: ' + speakify(S.trace[S.trace.length-1].x) + '.';
+  }
+  if(/\bwelche condition (haben|hatten) wir\b|\bunsere condition\b|\bwelche condition ist\b/.test(n))
+    return st.cond ? 'Die Condition ist ' + (VALUE_SPEECH[st.cond]||st.cond) + '.' : 'Die Condition ist noch nicht bestimmt.';
+  if(/\b(trade ?type|trade typ|welcher typ|welchen typ)\b/.test(n) && /\b(welche|welcher|welchen|unser|aktuell|was ist)\b/.test(n))
+    return st.type ? 'Der Trade Type ist ' + cap(st.type.toLowerCase()) + '.' : 'Der Trade Type ist noch nicht festgelegt.';
+  if(/\b(welche confirmation|welche bestaetigung|was ist (hier )?(aktuell |jetzt )?erforderlich|was brauchen wir (hier|jetzt|aktuell)|was ist gefordert)\b/.test(n)){
+    const conf = st.conf ? 'Geforderte Confirmation: ' + speakify(st.conf) + '. ' : 'Eine Confirmation ist noch nicht festgelegt. ';
+    return conf + (node ? 'Aktuell geprüft wird: ' + getSpeakableQuestion(node, st, S.node) : '');
+  }
+  if(/\b(welche gates|bestanden|was haben wir erfuellt|was ist erfuellt)\b/.test(n)){
+    if(!S) return 'Es läuft noch kein Trade.';
+    const ok = S.trace.filter(t => t.k==='ok').map(t => speakify(t.x));
+    return ok.length ? `Bestanden sind ${ok.length} Schritte: ` + ok.slice(-8).join(', ') + '.' : 'Bisher ist noch kein Gate bestanden.';
+  }
+  if(/\b(was kommt (als )?naechst|was fehlt|was steht noch aus|was ist noch offen|wie viele schritte)\b/.test(n)){
+    if(!S) return 'Zuerst wählst du den Timeframe.';
+    const stages = T().stages, i = stages.indexOf(stageNow());
+    const rest = stages.slice(i+1).map(s => STAGE_SPEECH[s]||s);
+    return rest.length ? `Nach ${STAGE_SPEECH[stageNow()]||stageNow()} folgen im Ablauf noch: ${joinOr(rest).replace(' oder ',' und ')}.` : 'Das ist bereits der letzte Abschnitt.';
+  }
+  if(/\b(no trade|kein trade)\b/.test(n) && /\b(warum|wieso|weshalb|wann|was fuehrt|was waere)\b/.test(n)){
+    if(S && S.result && S.result.type==='NO') return `Das fehlgeschlagene Gate ist ${speakify(S.result.gate)}, in der Stage ${STAGE_SPEECH[S.result.stage]||S.result.stage}. ${CORE_RULES[1].replace('=','ist')}`.replace(/NO TRADE/,'No Trade');
+    if(node){
+      const opts = optionsFor(node).filter(o => o.result && o.result.type==='NO');
+      if(!opts.length) return 'An diesem Gate führt keine Antwort direkt zu No Trade.';
+      return opts.map(o => `Bei ${spokenLabel(o)} wäre es No Trade, Failed Gate: ${speakify(o.result.gate)}.`).join(' ');
+    }
+  }
+  // Begriffserklärung aus Playbook / Tree
+  const m = n.match(/\b(?:was (?:bedeutet|bedeuten|heisst|ist|sind|meint|meinst du mit)|erklaer(?:e)?(?: mir)?|definier(?:e)?|wofuer steht)\s+(.+)$/);
+  if(m){ const g = findTerm(m[1]); if(g) return g.t; }
+  // generisches "Warum fragen wir das?" → Regel-Info des aktuellen Nodes
+  if(node && node.info && /^(warum|wieso|weshalb|wozu)\b/.test(n) && !/\d/.test(nn) && !glossaryFor(n).length)
+    return 'Regel-Info zu diesem Gate: ' + speakify(node.info);
+  return null;
+}
+function offlineHint(n){
+  const g = glossaryFor(n); if(g.length) return g[0].text;
+  const node = curNode(); if(node && node.info) return 'Regel-Info zu diesem Gate: ' + speakify(node.info);
+  return STAGE_RULE[stageNow()] || '';
+}
+function adviceRefusal(raw){
+  const n = norm(raw), opts = currentOptions();
+  let topic = 'dieses Gate';
+  for(const o of opts){ if(o.t!=='JA' && o.t!=='NEIN' && phraseScore(o, n, numify(n), false)>2){ topic = 'eine ' + spokenLabel(o); break; } }
+  const g = glossaryFor(n);
+  let s = `Ich kann dir erklären, was im CBR-System ${topic==='dieses Gate' ? 'dieses Gate' : topic} ausmacht. Die Auswahl musst du anhand deiner Chartbewertung treffen.`;
+  if(g.length) s += ' ' + g[0].text;
+  if(S && !S.result){ const node = curNode(); s += ' ' + getSpeakableQuestion(node, S.state, S.node) + optionsSpeech(optionsFor(node)); }
+  else s += ' ' + promptText();
+  return s;
+}
+async function handleQuestion(raw){
+  const n = stripFill(norm(raw)), nn = numify(n);
+  const local = localAnswer(n, nn);
+  if(local!==null){ V.lastQuestion = {q:raw, local:true}; return speak(local + ' ' + resumePrefix() + ' ' + promptText()); }
+  V.aiCancelled = false;
+  const ai = await askAI(raw, false);
+  if(V.aiCancelled) return speak('Okay. ' + promptText());
+  if(ai) return speak(ai + ' ' + resumePrefix() + ' ' + promptText());
+  const hint = offlineHint(n);
+  return speak('Die KI-Erklärung ist momentan nicht verfügbar. Die CBR Execution funktioniert weiterhin. ' + (hint ? hint + ' ' : '') + resumePrefix() + ' ' + promptText());
+}
+async function handleDetail(){
+  const lq = V.lastQuestion;
+  if(!lq) return speak('Es gibt noch keine Erklärung, die ich vertiefen kann. ' + promptText());
+  V.aiCancelled = false;
+  const ai = await askAI(lq.q, true);
+  if(V.aiCancelled) return speak('Okay. ' + promptText());
+  if(ai) return speak(ai + ' ' + resumePrefix() + ' ' + promptText());
+  return speak('Eine ausführlichere Erklärung ist momentan nicht verfügbar. Mehr ist im aktuellen CBR-System dazu nicht definiert. ' + resumePrefix() + ' ' + promptText());
+}
+
+/* =====================================================================
+   AI EXPLANATION LAYER  (Explain Only · über lokales Backend, kein Key im Browser)
+   ===================================================================== */
+function aiUrl(p){ return CBR_VOICE_CONFIG.aiBase + p; }
+function buildAIContext(question){
+  const ctx = {timeframe:null, stage:null};
+  if(S){
+    const node = curNode();
+    ctx.timeframe = S.tree==='FSIFS' ? 'FS / IFS' : S.tree;
+    ctx.stage = stageNow();
+    ctx.currentQuestion = node ? stripTags(fill(node.q, S.state)) : null;
+    ctx.currentSubtitle = node && node.sub ? stripTags(fill(node.sub, S.state)) : null;
+    ctx.testGate = !!(node && node.test);
+    ctx.nodeInfo = node && node.info || null;
+    ctx.currentOptions = currentOptions().map(o => o.t);
+    ctx.optionOutcomes = node ? optionsFor(node).map(o => ({option:o.t, outcome:outcomeText(o)})) : [];
+    ctx.result = S.result ? {type:S.result.type, failedGate:S.result.gate||null, waitFor:S.result.wait||null, path:S.result.path||null} : null;
+    ctx.tradeState = Object.assign({}, S.state);
+    ctx.decisionTrace = S.trace.map(t => t.x).slice(-30);
+    ctx.finalGateChecklist = FINAL[S.tree] ? FINAL[S.tree].map(i => i.l) : null;
+    ctx.decisionTreeOutline = treeOutline(S.tree);
+  }
+  ctx.coreRules = CORE_RULES;
+  ctx.playbookRule = STAGE_RULE[ctx.stage] || null;
+  ctx.playbookExcerpt = PLAYBOOK[ctx.stage] || null;
+  ctx.glossary = glossaryFor(question + ' ' + (ctx.currentQuestion||''));
+  ctx.notDefinedInSystem = ['ER','HV5','TP3','FVG','O-C','IND (Abkürzung)','A+ (nur Test-Gate)','Wick (nur Schwelle im Tree)'];
+  return ctx;
+}
+const DECISION_LANG = /\b(ich würde|ich empfehle|du solltest|wähle|nimm|ich wähle|ich nehme|würde ich)\b/i;
+function sanitizeAI(a, detail){
+  let s = String(a||'').replace(/[*_#`>]+/g,' ').replace(/\s+/g,' ').trim();
+  if(!s) return '';
+  if(DECISION_LANG.test(s)) return 'Ich kann dir die Regel erklären. Die Auswahl musst du anhand deiner Chartbewertung treffen.';
+  const max = detail ? 1400 : 600;
+  if(s.length>max){ const cut = s.slice(0,max); const i = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? ')); s = i>80 ? cut.slice(0,i+1) : cut + '…'; }
+  return s;
+}
+async function checkAI(){
+  if(!CBR_VOICE_CONFIG.aiEnabled) return false;
+  const ctrl = new AbortController(), to = setTimeout(() => ctrl.abort(), 2500);
+  try{
+    const r = await fetch(aiUrl('/api/health'), {signal:ctrl.signal});
+    const j = await r.json();
+    V.aiAvailable = !!(r.ok && j && j.ai);
+  }catch(e){ V.aiAvailable = false; }
+  finally{ clearTimeout(to); V.aiCheckedAt = Date.now(); }
+  return V.aiAvailable;
+}
+async function askAI(question, detail){
+  if(!CBR_VOICE_CONFIG.aiEnabled) return null;
+  if(V.aiAvailable===false && Date.now()-V.aiCheckedAt < 30000) return null;
+  V.busy = true; refreshStatus();
+  const ctrl = new AbortController(); V.aiAbort = ctrl;
+  const to = setTimeout(() => ctrl.abort(), CBR_VOICE_CONFIG.aiTimeout);
+  try{
+    const r = await fetch(aiUrl('/api/explain'), {
+      method:'POST', headers:{'Content-Type':'application/json'}, signal:ctrl.signal,
+      body:JSON.stringify({question:String(question).slice(0,500), detail:!!detail, context:buildAIContext(question)}),
+    });
+    if(!r.ok){ if(r.status===503){ V.aiAvailable = false; V.aiCheckedAt = Date.now(); } return null; }
+    const j = await r.json();
+    V.aiAvailable = true;
+    const a = sanitizeAI(j && j.answer, detail);
+    if(a) V.lastQuestion = {q:question, local:false};
+    return a || null;                // nur Text – wird NIE als Befehl ausgewertet
+  }catch(e){
+    if(!V.aiCancelled){ V.aiAvailable = false; V.aiCheckedAt = Date.now(); }
+    return null;
+  }finally{
+    clearTimeout(to); V.aiAbort = null; V.busy = false; refreshStatus();
+  }
+}
+function abortAI(){ if(V.aiAbort){ V.aiCancelled = true; try{ V.aiAbort.abort(); }catch(e){} } }
+
+/* =====================================================================
+   TEXT TO SPEECH
+   ===================================================================== */
+function pickVoice(){
+  if(!SYNTH) return;
+  const vs = SYNTH.getVoices() || [];
+  const de = vs.filter(v => /^de(-|_|$)/i.test(v.lang));
+  V.voice = de.find(v => /de-DE/i.test(v.lang) && /google|microsoft|katja|conrad|anna|helena|petra|markus|hedda|stefan/i.test(v.name))
+         || de.find(v => /de-DE/i.test(v.lang)) || de[0] || null;
+}
+if(SYNTH){ pickVoice(); try{ SYNTH.addEventListener ? SYNTH.addEventListener('voiceschanged', pickVoice) : (SYNTH.onvoiceschanged = pickVoice); }catch(e){} }
+function splitSentences(t){
+  const parts = t.match(/[^.!?]+[.!?]*/g) || [t], out = [];
+  let cur = '';
+  for(const p of parts){ if((cur + p).length > 200 && cur){ out.push(cur.trim()); cur = p; } else cur += p; }
+  if(cur.trim()) out.push(cur.trim());
+  return out;
+}
+function utter(text){
+  return new Promise(res => {
+    let done = false;
+    const fin = () => { if(done) return; done = true; clearTimeout(to); res(); };
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = CBR_VOICE_CONFIG.language; if(V.voice) u.voice = V.voice; u.rate = 1.05;
+    u.onend = fin; u.onerror = fin;
+    const to = setTimeout(fin, 4000 + text.length*110);
+    try{ SYNTH.speak(u); }catch(e){ fin(); }
+  });
+}
+function speak(text, options){
+  text = speakify(text);
+  if(!text) return Promise.resolve();
+  showCbr(text);
+  V.lastSpoken = norm(text);
+  if(!SYNTH || !CBR_VOICE_CONFIG.enabled) return Promise.resolve();
+  const token = ++V.speakToken;
+  try{ SYNTH.cancel(); }catch(e){}
+  V.speaking = true; V.bargeable = text.length > 140; refreshStatus();
+  const parts = splitSentences(text);
+  return (async () => { for(const p of parts){ if(token!==V.speakToken) break; await utter(p); } })()
+    .finally(() => { if(token===V.speakToken){ V.speaking = false; V.speakEndAt = Date.now(); refreshStatus(); touch(); } });
+}
+function cancelSpeech(){
+  V.speakToken++;
+  try{ SYNTH && SYNTH.cancel(); }catch(e){}
+  if(V.speaking){ V.speaking = false; V.speakEndAt = Date.now(); }
+  refreshStatus();
+}
+function beep(){
+  try{
+    const ctx = V.audio; if(!ctx) return;
+    if(ctx.state==='suspended') ctx.resume();
+    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+    o.type = 'sine'; o.frequency.setValueAtTime(880, t); o.frequency.setValueAtTime(1175, t+0.07);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.12, t+0.01); g.gain.exponentialRampToValueAtTime(0.0001, t+0.16);
+    o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t+0.17);
+  }catch(e){}
+}
+
+/* =====================================================================
+   SPEECH RECOGNITION
+   ===================================================================== */
+function recEnsure(){
+  if(V.rec || !SR) return V.rec;
+  const r = new SR();
+  r.lang = CBR_VOICE_CONFIG.language;
+  r.continuous = CBR_VOICE_CONFIG.continuousMode;
+  r.interimResults = true;
+  r.maxAlternatives = 3;
+  r.onstart = () => { V.recRunning = true; };
+  r.onresult = onRecResult;
+  r.onerror = onRecError;
+  r.onend = onRecEnd;
+  V.rec = r;
+  return r;
+}
+function recStart(){
+  if(!SR || !V.wanted || V.fatal) return;
+  recEnsure();
+  if(V.recRunning) return;
+  try{ V.rec.start(); V.recRunning = true; }catch(e){ /* läuft bereits */ }
+}
+function onRecEnd(){
+  V.recRunning = false;
+  if(!V.wanted || V.fatal) return;
+  clearTimeout(V.restartTimer);
+  V.restartTimer = setTimeout(recStart, V.restartDelay);
+}
+function onRecError(e){
+  const err = e && e.error;
+  log('recognition error', err);
+  if(err==='not-allowed' || err==='service-not-allowed') return fatal('MIC DENIED', 'Mikrofonzugriff wurde verweigert. Bitte das Mikrofon im Browser erlauben.');
+  if(err==='audio-capture') return fatal('NO MICROPHONE', 'Kein Mikrofon gefunden.');
+  if(err==='language-not-supported') return fatal('LANGUAGE NOT SUPPORTED', 'Deutsche Spracherkennung wird nicht unterstützt.');
+  if(err==='network'){
+    V.netErr++;
+    V.restartDelay = Math.min(8000, 1000 * V.netErr);
+    if(V.netErr>=6) return fatal('VOICE NETWORK ERROR', 'Die Spracherkennung ist nicht erreichbar. Bitte die Internetverbindung prüfen. Das Cockpit funktioniert weiter mit Tastatur und Maus.');
+    setStatus('ERROR', 'VOICE NETWORK · RETRY');
+  }
+  // no-speech / aborted: normal – Neustart über onend
+}
+function fatal(label, msg){
+  V.fatal = true; V.wanted = false; V.conv = false; V.pending = null;
+  clearTimeout(V.timer); clearTimeout(V.restartTimer);
+  try{ V.rec && V.rec.abort(); }catch(e){}
+  setStatus('ERROR', label);
+  if(msg) speak(msg);
+}
+function onRecResult(e){
+  for(let i=e.resultIndex; i<e.results.length; i++){
+    const r = e.results[i];
+    if(r.isFinal){
+      const alts = [];
+      for(let j=0; j<r.length; j++) if(r[j] && r[j].transcript) alts.push(r[j].transcript);
+      onFinal(alts);
+    } else if(!V.speaking && V.conv && r[0]) showInterim(r[0].transcript);
+  }
+}
+const STOP_RE = /^(stopp?|halt|ruhe|genug|danke|okay stopp?|cbr stopp?)$/;
+function onFinal(alts){
+  alts = (alts||[]).map(a => String(a).trim()).filter(Boolean);
+  if(!alts.length) return;
+  const n0 = norm(alts[0]), now = Date.now();
+  V.restartDelay = 300; V.netErr = 0;
+  // CBR spricht: eigene Stimme nie als Befehl – nur "Stopp" bei langen Erklärungen (Barge-in)
+  if(V.speaking || now - V.speakEndAt < CBR_VOICE_CONFIG.echoTail){
+    if(V.speaking && V.bargeable && STOP_RE.test(n0) && !V.lastSpoken.includes(n0)){ cancelSpeech(); showUser(alts[0]); }
+    return;
+  }
+  if(n0.length>=25 && V.lastSpoken.includes(n0) && now - V.speakEndAt < 4000) return;          // Echo-Schutz
+  if(n0===V.lastFinal.t && now - V.lastFinal.at < CBR_VOICE_CONFIG.duplicateWindow) return;  // Duplikat
+  V.lastFinal = {t:n0, at:now};
+  if(V.busy){ if(STOP_RE.test(n0) || /\babbrechen\b/.test(n0)){ showUser(alts[0]); abortAI(); } return; }
+  handleUtterance(alts);
+}
+function handleUtterance(alts){
+  const n = norm(alts[0]);
+  if(!V.conv){
+    const rest = stripWake(n);
+    if(rest===null) return;                     // Wake-Word-Modus: nur "Hey CBR"
+    showUser(alts[0]);
+    return activate(rest);
+  }
+  showUser(alts[0]);
+  const rest = stripWake(n);
+  if(rest!==null){
+    if(!rest){ beep(); touch(); return speak(promptText()); }
+    alts = [rest];
+  }
+  setStatus('PROCESSING');
+  routeVoiceIntent(alts);
+  refreshStatus();
+}
+
+/* =====================================================================
+   CONVERSATION MANAGER
+   ===================================================================== */
+function activate(rest){
+  V.conv = true; beep(); touch();
+  V.lastKey = engineKey();
+  if(rest) return routeVoiceIntent([rest]);
+  if(!V.greeted){
+    V.greeted = true;
+    let open = S && S.trace && S.trace.length ? S.tree : null;
+    if(!S){ const d = load(); if(d && d.S && d.S.trace && d.S.trace.length) open = d.S.tree; }
+    if(open){
+      V.pending = {type:'resume'};
+      return speak(`Es gibt einen offenen ${TF_SPEECH[open]||open}-Trade. Möchtest du ihn fortsetzen oder einen neuen Trade starten?`);
+    }
+  }
+  if(!S) return speak(TF_PROMPT);
+  return speak('CBR Voice aktiv. ' + promptText());
+}
+function touch(){
+  clearTimeout(V.timer);
+  if(!V.conv || V.readOnly) return;
+  V.timer = setTimeout(onTimeout, CBR_VOICE_CONFIG.sessionTimeout);
+}
+function onTimeout(){
+  if(!V.conv) return;
+  if(V.speaking || V.busy){ touch(); return; }
+  goStandby(true);
+}
+function goStandby(announce){
+  V.conv = false; V.pending = null; clearTimeout(V.timer);
+  refreshStatus();
+  if(announce) speak('CBR Voice geht in Standby.');
+}
+// Engine-Änderungen durch Maus/Tastatur: aktuelle Frage automatisch vorlesen
+function onEngineChange(){
+  const k = engineKey();
+  if(k===V.lastKey) return;
+  V.lastKey = k;
+  if(!V.conv || !CBR_VOICE_CONFIG.autoReadQuestions) return;
+  V.pending = null;
+  cancelSpeech();
+  speak(promptText());
+  touch();
+}
+
+/* =====================================================================
+   UI · STATUS · TRANSCRIPT
+   ===================================================================== */
+const STATUS_LABEL = {OFF:'VOICE OFF', READY:'HEY CBR · READY', LISTENING:'LISTENING', SPEAKING:'CBR SPEAKING', PROCESSING:'PROCESSING',
+  THINKING:'THINKING', CONFIRMING:'CONFIRMATION', ERROR:'ERROR', UNSUPPORTED:'VOICE INPUT NOT SUPPORTED', READONLY:'READ-ALOUD ONLY'};
+function setStatus(st, label){
+  V.status = st;
+  const txt = label || STATUS_LABEL[st] || st;
+  document.querySelectorAll('.vstat').forEach(el => { el.dataset.s = st; const s = el.querySelector('span'); if(s) s.textContent = txt; });
+  document.querySelectorAll('.vbtn').forEach(b => b.classList.toggle('von', CBR_VOICE_CONFIG.enabled));
+}
+function refreshStatus(){
+  if(!CBR_VOICE_CONFIG.enabled) return setStatus('OFF');
+  if(V.fatal) return;
+  if(V.speaking) return setStatus('SPEAKING');
+  if(V.busy) return setStatus('THINKING');
+  if(!SR) return setStatus('UNSUPPORTED');
+  if(V.pending && V.pending.type==='confirm') return setStatus('CONFIRMING');
+  setStatus(V.conv ? 'LISTENING' : 'READY');
+}
+function renderLine(){
+  const u = V.interim ? `<span class="vu dim">DU „${esc(V.interim)}…“</span>` : (V.lastUser ? `<span class="vu">DU „${esc(V.lastUser)}“</span>` : '');
+  const c = V.lastCbr ? `<span class="vc">CBR „${esc(V.lastCbr)}“</span>` : '';
+  document.querySelectorAll('.vline').forEach(el => { el.innerHTML = u + c; });
+}
+function showUser(t){ V.lastUser = t; V.interim = ''; renderLine(); }
+function showInterim(t){ V.interim = t; renderLine(); }
+function showCbr(t){ V.lastCbr = t; V.interim = ''; renderLine(); }
+
+function enableVoice(){
+  CBR_VOICE_CONFIG.enabled = true;
+  V.wanted = true; V.fatal = false; V.greeted = false; V.netErr = 0; V.restartDelay = 300;
+  document.body.classList.add('voice-on');
+  try{ if(!V.audio){ const AC = window.AudioContext || window.webkitAudioContext; if(AC) V.audio = new AC(); } if(V.audio && V.audio.state==='suspended') V.audio.resume(); }catch(e){}
+  if(CBR_VOICE_CONFIG.aiEnabled && Date.now() - V.aiCheckedAt > 60000) checkAI();
+  if(!SR){
+    V.conv = true; V.readOnly = true; V.lastKey = engineKey();
+    setStatus('UNSUPPORTED');
+    speak('Spracheingabe wird von diesem Browser nicht unterstützt. CBR liest die Fragen vor. ' + promptText());
+    return;
+  }
+  V.readOnly = false;
+  recStart();
+  refreshStatus();
+  speak('CBR Voice bereit. Sag Hey CBR.');
+}
+function disableVoice(){
+  abortAI();
+  cancelSpeech();
+  CBR_VOICE_CONFIG.enabled = false;
+  V.wanted = false; V.conv = false; V.readOnly = false; V.pending = null;
+  clearTimeout(V.timer); clearTimeout(V.restartTimer);
+  try{ V.rec && V.rec.abort(); }catch(e){}
+  V.recRunning = false;
+  document.body.classList.remove('voice-on');
+  setStatus('OFF');
+}
+function toggleVoice(){ CBR_VOICE_CONFIG.enabled ? disableVoice() : enableVoice(); }
+
+/* ---------- Verdrahtung (additiv – bestehende Handler bleiben unverändert) ---------- */
+document.querySelectorAll('.vbtn').forEach(b => b.addEventListener('click', e => { e.preventDefault(); toggleVoice(); b.blur(); }));
+document.addEventListener('keydown', e => {
+  if(e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+  if((e.key==='v' || e.key==='V') && !(e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))){ e.preventDefault(); toggleVoice(); }
+});
+const mo = new MutationObserver(() => { clearTimeout(V.moTimer); V.moTimer = setTimeout(onEngineChange, 30); });
+['center'].forEach(id => { const el = $(id); if(el) mo.observe(el, {childList:true}); });
+['app','start'].forEach(id => { const el = $(id); if(el) mo.observe(el, {attributes:true, attributeFilter:['class']}); });
+V.lastKey = engineKey();
+setStatus('OFF');
+
+// Schnittstelle für Tests / Debugging (enthält keine Secrets)
+window.CBRVoice = {
+  config: CBR_VOICE_CONFIG,
+  matchCurrentOption, classifyIntent, routeVoiceIntent, getSpeakableQuestion, promptText, speakify, norm, numify,
+  buildAIContext, spokenLabel, enable: enableVoice, disable: disableVoice, toggle: toggleVoice,
+  hear: alts => onFinal(Array.isArray(alts) ? alts : [alts]),
+  state: () => ({status:V.status, conv:V.conv, speaking:V.speaking, busy:V.busy, pending:V.pending && V.pending.type, lastCbr:V.lastCbr, aiAvailable:V.aiAvailable}),
+};
+})();
 </script>
 </body>
 </html>
